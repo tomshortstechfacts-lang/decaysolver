@@ -112,3 +112,51 @@ jobs:
         with:
           name: convergence-csv
           path: convergence.csv
+
+  coverage:
+    name: couverture (GCC, gcov)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Outils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+          python3 -m pip install --user gcovr==8.6
+          echo "CC=gcc-14"  >> "$GITHUB_ENV"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
+      - name: Configuration (preset coverage)
+        run: cmake --preset coverage
+      - name: Compilation
+        run: cmake --build --preset coverage --parallel
+      - name: Tests
+        run: ctest --preset coverage
+      - name: Couverture par fichier (cœur numerique en tete, CLI exclu)
+        run: |
+          ~/.local/bin/gcovr --root . --filter 'src/' --filter 'include/'             --gcov-executable gcov-14 --object-directory build/coverage             --txt coverage.txt --markdown coverage.md --html-details coverage.html
+          cat coverage.txt
+          { echo "## Couverture par fichier (lignes)"; cat coverage.md; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.txt
+            coverage.md
+            coverage*.html
+            coverage*.css
+
+  docs:
+    name: documentation Doxygen
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Outils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+      - name: Generation (avertissements affiches)
+        run: doxygen docs/Doxyfile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-html
+          path: docs/api/html

@@ -1,0 +1,46 @@
+# Doxygen pour decaysolver. Généré en CI (job « docs »), jamais committé.
+# Les commentaires /// des en-têtes portent : équation implémentée, référence, hypothèses,
+# unités, exceptions. MathJax rend le LaTeX des formules.
+
+PROJECT_NAME           = decaysolver
+PROJECT_BRIEF          = "Résolution vérifiée des équations de Bateman"
+PROJECT_NUMBER         = 0.1.0
+OUTPUT_DIRECTORY       = docs/api
+OUTPUT_LANGUAGE        = French
+
+INPUT                  = README.md include/decaysolver src data/PROVENANCE.md docs/adr
+FILE_PATTERNS          = *.hpp *.cpp *.md
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+EXCLUDE_PATTERNS       = */build/*
+
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXTRACT_ANON_NSPACES   = NO
+HIDE_UNDOC_MEMBERS     = NO
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = YES
+MARKDOWN_SUPPORT       = YES
+TOC_INCLUDE_HEADINGS   = 3
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@3
+
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+HAVE_DOT               = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+CLASS_DIAGRAMS         = YES
+DOT_IMAGE_FORMAT       = svg
+
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_AS_ERROR          = NO
