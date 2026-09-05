@@ -19,7 +19,7 @@ jobs:
           - { os: windows-2022, compiler: msvc, build_type: Debug }
           - { os: windows-2022, compiler: msvc, build_type: Release }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Outils (Linux)
         if: runner.os == 'Linux'
@@ -54,7 +54,7 @@ jobs:
     name: clang-format
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Outils
         run: |
           sudo apt-get update
