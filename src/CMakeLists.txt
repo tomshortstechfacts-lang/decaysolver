@@ -6,6 +6,7 @@ add_library(decaysolver
     decay_system.cpp
     bateman.cpp
     integrator.cpp
+    inventory.cpp
 )
 add_library(DecaySolver::decaysolver ALIAS decaysolver)
 
