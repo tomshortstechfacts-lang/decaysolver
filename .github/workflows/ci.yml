@@ -66,3 +66,27 @@ jobs:
         run: |
           find include src apps tests \( -name '*.hpp' -o -name '*.cpp' \) -print0 \
             | xargs -0 clang-format-18 --dry-run --Werror
+
+  convergence:
+    name: ordres de convergence (GCC Release)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Outils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+          echo "CC=gcc-14"  >> "$GITHUB_ENV"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
+      - name: Configuration
+        run: >
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          -DDECAYSOLVER_WARNINGS_AS_ERRORS=ON -DDECAYSOLVER_BUILD_TESTS=OFF
+      - name: Compilation
+        run: cmake --build build --target decaysolver_convergence --parallel
+      - name: Mesure des ordres (echec si un ordre observe s'ecarte de plus de 0,1)
+        run: ./build/verification/decaysolver_convergence verification/V2_order_of_accuracy/oracle_lambda123.csv convergence.csv && cat convergence.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: convergence-csv
+          path: convergence.csv
