@@ -8,7 +8,7 @@ savoir ce que vaut le chiffre obtenu.
 [![CI](https://github.com/tomshortstechfacts-lang/decaysolver/actions/workflows/ci.yml/badge.svg)](https://github.com/tomshortstechfacts-lang/decaysolver/actions/workflows/ci.yml)
 [![Licence CeCILL-C](https://img.shields.io/badge/licence-CeCILL--C-blue.svg)](LICENSE)
 
-> **État du projet : version 0.1.0, lots 1 à 4 du cahier des charges livrés.** Cœur numérique
+> **État du projet : version 0.1.1, lots 1 à 4 du cahier des charges livrés.** Cœur numérique
 > vérifié contre un oracle multiprécision, ordres de convergence contrôlés en CI, mode inventaire
 > validé par évaluation croisée. Seul le DOI Zenodo reste à créer. Le tableau ci-dessous marque ce
 > qui existe (✅) et ce qui reste (⬜).

@@ -9,6 +9,18 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 
 Rien pour l'instant.
 
+## [0.1.1] — 2026-09-05
+
+Version de publication : identique à 0.1.0 pour le code et les données. Sert à l'archivage
+Zenodo (DOI), activé après la publication de la 0.1.0.
+
+### Changed
+- README : bandeau d'état mis à jour (il annonçait encore le lot 0).
+- Numéro de version dans CMake, CITATION.cff et Doxyfile.
+
+### Numerics
+- Aucun changement de résultat numérique.
+
 ## [0.1.0] — 2026-09-05
 
 Première version complète : lots 1 à 4 du cahier des charges (le DOI Zenodo attend le passage

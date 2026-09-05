@@ -4,7 +4,7 @@
 
 PROJECT_NAME           = decaysolver
 PROJECT_BRIEF          = "Résolution vérifiée des équations de Bateman"
-PROJECT_NUMBER         = 0.1.0
+PROJECT_NUMBER         = 0.1.1
 OUTPUT_DIRECTORY       = docs/api
 OUTPUT_LANGUAGE        = French
 

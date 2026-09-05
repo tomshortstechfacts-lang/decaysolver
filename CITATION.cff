@@ -5,7 +5,7 @@ title: "decaysolver : résolution vérifiée des équations de Bateman"
 authors:
   - family-names: Bulabois
     given-names: Tom
-version: 0.1.0
+version: 0.1.1
 date-released: 2026-09-05
 license: CECILL-C
 repository-code: "https://github.com/tomshortstechfacts-lang/decaysolver"

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(decaysolver
-    VERSION 0.1.0
+    VERSION 0.1.1
     DESCRIPTION "Résolution vérifiée des équations de Bateman (chaînes de décroissance radioactive)"
     HOMEPAGE_URL "https://github.com/tomshortstechfacts-lang/decaysolver"
     LANGUAGES CXX)
