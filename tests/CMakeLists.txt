@@ -19,3 +19,4 @@ endif()
 include(Catch)
 
 add_subdirectory(unit)
+add_subdirectory(regression)
