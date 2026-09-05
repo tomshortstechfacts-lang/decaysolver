@@ -1,6 +1,8 @@
 add_library(decaysolver
     units.cpp
     provenance.cpp
+    nuclide.cpp
+    nuclide_library.cpp
 )
 add_library(DecaySolver::decaysolver ALIAS decaysolver)
 
