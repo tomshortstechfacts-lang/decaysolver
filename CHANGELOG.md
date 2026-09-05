@@ -8,6 +8,11 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 ## [Unreleased]
 
 ### Added
+- Bibliothèque de nucléides (`decaysolver/nuclide.hpp`, `decaysolver/nuclide_library.hpp`) :
+  noms canoniques (graphies usuelles acceptées), modes de décroissance, voies avec rapports
+  d'embranchement, chargement CSV validé (Σ b = 1 à 5e-4, filles présentes, absence de cycle).
+- Données `data/nuclides_icrp107.csv` : 139 nucléides ICRP-107 extraits par script versionné,
+  provenance et SHA-256 dans `data/PROVENANCE.md`, deux voies β⁻ rétablies (At-219, At-217).
 - Socle du projet : bibliothèque `DecaySolver::decaysolver`, exécutable `decaysolver`, CMake ≥ 3.21
   avec presets `dev`, `release`, `asan`, `ubsan`, `coverage`.
 - Avertissements stricts (GCC, Clang, MSVC), `-Werror` en CI, refus explicite de `-ffast-math`

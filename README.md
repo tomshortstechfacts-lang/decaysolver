@@ -14,7 +14,7 @@ savoir ce que vaut le chiffre obtenu.
 | Lot | Contenu | État |
 |---|---|---|
 | 0 | Structure, CMake strict, conversions d'unités, provenance, CI | ✅ |
-| 1 | Bibliothèque de 35 nucléides, Bateman analytique (cas dégénéré inclus), Euler implicite, RK4, mode inventaire | ⬜ |
+| 1 | Bibliothèque de nucléides (✅), Bateman analytique (cas dégénéré inclus), Euler implicite, RK4, mode inventaire | 🔶 en cours |
 | 2 | Oracle multiprécision, ordres de convergence mesurés, cas dégénérés, rapport de vérification | ⬜ |
 | 3 | Exponentielle de matrice, non-régression, sanitizers, couverture, bibliothèque complète | ⬜ |
 | 4 | Évaluation croisée avec `radioactivedecay`, DOI | ⬜ |
@@ -82,7 +82,7 @@ dans son domaine de validation).
 
 | Niveau | Contenu | Terme ASN | État |
 |---|---|---|---|
-| T1 | Unitaires : conversions, parsing, construction du graphe, $\sum b = 1$ | vérification | ✅ conversions |
+| T1 | Unitaires : conversions, parsing, noms de nucléides, validation de la bibliothèque ($\sum b = 1$, filles présentes, absence de cycle) | vérification | ✅ |
 | T2 | Solutions analytiques vs oracle multiprécision, équilibres | vérification (cas de validation analytiques) | ⬜ |
 | T3 | Ordres de convergence observés vs théoriques | vérification | ⬜ |
 | T4 | Invariants : positivité, conservation, semi-groupe, $N(0) = N_0$ | vérification | ⬜ |
@@ -122,8 +122,11 @@ Lot 0 : l'exécutable n'expose que sa provenance.
 
 ## 9. Données nucléaires
 
-Lot 1. Aucune donnée n'est codée en dur : demi-vies, modes et rapports d'embranchement vivent dans
-`data/`, avec un fichier `PROVENANCE.md` (source, version, date d'extraction, licence, SHA-256).
+Aucune donnée n'est codée en dur. `data/nuclides_icrp107.csv` contient 139 nucléides (les 35 de la
+liste standard de déclaration des déchets et la fermeture complète de leurs descendants), extraits
+d'**ICRP-107** par un script versionné, avec demi-vies dans leur valeur et unité d'origine.
+Source, chemin d'extraction, licence, SHA-256, voies rétablies et limitations (pas d'incertitudes,
+divergences entre bibliothèques) : [`data/PROVENANCE.md`](data/PROVENANCE.md).
 
 ## 10. Références
 
