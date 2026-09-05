@@ -7,7 +7,9 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 
 ## [Unreleased]
 
-Rien pour l'instant.
+### Changed
+- README et CITATION.cff : badge et DOI Zenodo (concept 10.5281/zenodo.22356941, version 0.1.1
+  10.5281/zenodo.22356942).
 
 ## [0.1.1] — 2026-09-05
 

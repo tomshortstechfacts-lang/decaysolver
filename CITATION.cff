@@ -7,6 +7,14 @@ authors:
     given-names: Tom
 version: 0.1.1
 date-released: 2026-09-05
+doi: 10.5281/zenodo.22356942
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22356941
+    description: "DOI de concept (toutes les versions)"
+  - type: doi
+    value: 10.5281/zenodo.22356942
+    description: "DOI de la version 0.1.1"
 license: CECILL-C
 repository-code: "https://github.com/tomshortstechfacts-lang/decaysolver"
 keywords:

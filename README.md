@@ -7,11 +7,12 @@ savoir ce que vaut le chiffre obtenu.
 
 [![CI](https://github.com/tomshortstechfacts-lang/decaysolver/actions/workflows/ci.yml/badge.svg)](https://github.com/tomshortstechfacts-lang/decaysolver/actions/workflows/ci.yml)
 [![Licence CeCILL-C](https://img.shields.io/badge/licence-CeCILL--C-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/1358188913.svg)](https://doi.org/10.5281/zenodo.22356941)
 
 > **État du projet : version 0.1.1, lots 1 à 4 du cahier des charges livrés.** Cœur numérique
 > vérifié contre un oracle multiprécision, ordres de convergence contrôlés en CI, mode inventaire
-> validé par évaluation croisée. Seul le DOI Zenodo reste à créer. Le tableau ci-dessous marque ce
-> qui existe (✅) et ce qui reste (⬜).
+> validé par évaluation croisée, archivé sur Zenodo avec DOI. Le tableau ci-dessous marque ce qui
+> existe (✅).
 
 | Lot | Contenu | État |
 |---|---|---|
@@ -19,7 +20,7 @@ savoir ce que vaut le chiffre obtenu.
 | 1 | Bibliothèque de nucléides, Bateman analytique avec cas dégénérés, Euler explicite/implicite, Crank–Nicolson, RK4, mode inventaire et ligne de commande | ✅ |
 | 2 | Oracle multiprécision, ordres de convergence mesurés et vérifiés en CI, cas dégénérés, rapport de vérification | ✅ |
 | 3 | Exponentielle de matrice (SciPy), non-régression, sanitizers, couverture, Doxygen, ADR, bibliothèque complète | ✅ |
-| 4 | Évaluation croisée avec `radioactivedecay` (✅), DOI Zenodo (⬜, nécessite un dépôt public) | 🔶 |
+| 4 | Évaluation croisée avec `radioactivedecay`, archivage Zenodo et DOI | ✅ |
 
 ## 1. Le problème mathématique
 
@@ -232,7 +233,9 @@ voies non répertoriées et limitations (pas d'incertitudes, divergences entre b
 
 ## 11. Citer, licence, contribuer
 
-Citation : voir [`CITATION.cff`](CITATION.cff).
+Citation : voir [`CITATION.cff`](CITATION.cff). Archive Zenodo : DOI de version
+[10.5281/zenodo.22356942](https://doi.org/10.5281/zenodo.22356942) (0.1.1) ; DOI de concept,
+toutes versions, [10.5281/zenodo.22356941](https://doi.org/10.5281/zenodo.22356941).
 
 Licence : **CeCILL-C** (voir [`LICENSE`](LICENSE), version française dans
 [`LICENSE.fr`](LICENSE.fr)). Choix motivé par la cohérence avec l'écosystème français du logiciel
