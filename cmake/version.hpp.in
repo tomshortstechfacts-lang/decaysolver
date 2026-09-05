@@ -1,0 +1,20 @@
+#pragma once
+
+// Fichier généré par CMake à la configuration depuis cmake/version.hpp.in — ne pas éditer.
+
+namespace decaysolver::version {
+
+inline constexpr const char* string = "@PROJECT_VERSION@";
+inline constexpr int major = @PROJECT_VERSION_MAJOR@;
+inline constexpr int minor = @PROJECT_VERSION_MINOR@;
+inline constexpr int patch = @PROJECT_VERSION_PATCH@;
+
+/// SHA git court du dépôt au moment de la configuration CMake (voir cmake/GitVersion.cmake).
+inline constexpr const char* git_sha = "@DECAYSOLVER_GIT_SHA@";
+/// Vrai si l'arbre de travail différait de HEAD à la configuration.
+inline constexpr bool git_dirty = @DECAYSOLVER_GIT_DIRTY@;
+
+inline constexpr const char* compiler = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@";
+inline constexpr const char* build_type = "@DECAYSOLVER_BUILD_TYPE@";
+
+} // namespace decaysolver::version
