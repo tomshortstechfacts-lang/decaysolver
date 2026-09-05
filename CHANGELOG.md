@@ -7,6 +7,13 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 
 ## [Unreleased]
 
+Rien pour l'instant.
+
+## [0.1.0] — 2026-09-05
+
+Première version complète : lots 1 à 4 du cahier des charges (le DOI Zenodo attend le passage
+du dépôt en public).
+
 ### Added
 - Lot 3 : test de non-régression T6 (35 nucléides à 1 Bq, 10 ans, deux conventions, référence
   figée avec provenance) ; jobs CI AddressSanitizer et UndefinedBehaviorSanitizer (Clang 18),
