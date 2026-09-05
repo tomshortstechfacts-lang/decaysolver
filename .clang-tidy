@@ -1,0 +1,34 @@
+---
+# Analyse statique du cœur numérique. Exclusions justifiées :
+#  - modernize-use-trailing-return-type : choix de style, sans valeur pour la sûreté ;
+#  - *-magic-numbers : les tests contiennent des valeurs de référence nommées par leur contexte ;
+#  - readability-identifier-length : λ, t, h, N sont les noms de la littérature (CDC §3.4).
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-identifier-length
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*/include/decaysolver/.*'
+FormatStyle: file
+CheckOptions:
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
