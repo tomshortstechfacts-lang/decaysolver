@@ -122,7 +122,28 @@ dans son domaine de validation).
 (matrice phénomène × cas, tableaux et figures des ordres de convergence, domaine de validité
 chiffré, limitations). Troisième voie : [`expm_comparison.md`](verification/report/expm_comparison.md).
 Choix structurants : [`docs/adr/`](docs/adr/). Qualité : sanitizers ASan/UBSan, couverture par
-fichier et documentation Doxygen produits par la CI (résumé et artefacts de chaque run). Figures :
+fichier et documentation Doxygen produits par la CI (résumé et artefacts de chaque run).
+
+**Couverture** (GCC 14, gcov/gcovr, run du 2026-09-05, `src/` et `include/` seulement, CLI exclu) :
+95,8 % des lignes et 96,8 % des fonctions au global. Par module, en lignes :
+
+| Module | Lignes | Rôle |
+|---|---|---|
+| `bateman.cpp` | 96,9 % | cœur numérique : différences divisées, superposition |
+| `integrator.cpp` | 95,7 % | cœur numérique : quatre schémas |
+| `decay_system.cpp` | 100 % | construction du système, ordre topologique |
+| `nuclide.cpp` | 97,6 % | noms, modes |
+| `nuclide_library.cpp` | 96,3 % | chargement et validation des données |
+| `inventory.cpp` | 90,9 % | mode inventaire |
+| `units.cpp`, `provenance.cpp` | 96,8 %, 100 % | conversions, en-tête de sortie |
+
+Les lignes non couvertes sont des branches d'erreur (fichier introuvable, valeur d'énumération
+hors plage, garde-fous jamais atteints par les données valides). La couverture de **branches**
+rapportée par gcov (64,5 %) compte aussi les chemins d'exception implicites générés par le
+compilateur autour de chaque opération sur `std::string` ou `std::vector` ; elle n'est pas
+interprétable telle quelle en C++ et n'est pas retenue comme indicateur.
+
+Figures :
 
 ![Ordres de convergence, erreur L∞](verification/V2_order_of_accuracy/figures/convergence_Linf.png)
 
