@@ -14,7 +14,7 @@ savoir ce que vaut le chiffre obtenu.
 | Lot | Contenu | État |
 |---|---|---|
 | 0 | Structure, CMake strict, conversions d'unités, provenance, CI | ✅ |
-| 1 | Bibliothèque de nucléides (✅), Bateman analytique avec cas dégénérés (✅), Euler explicite/implicite, Crank–Nicolson, RK4 (✅), mode inventaire (⬜) | 🔶 en cours |
+| 1 | Bibliothèque de nucléides, Bateman analytique avec cas dégénérés, Euler explicite/implicite, Crank–Nicolson, RK4, mode inventaire et ligne de commande | ✅ |
 | 2 | Oracle multiprécision, ordres de convergence mesurés, cas dégénérés, rapport de vérification | ⬜ |
 | 3 | Exponentielle de matrice, non-régression, sanitizers, couverture, bibliothèque complète | ⬜ |
 | 4 | Évaluation croisée avec `radioactivedecay`, DOI | ⬜ |
@@ -53,6 +53,15 @@ triangulaire inférieure.
 ## 3. Hypothèses
 
 - Décroissance spontanée seule : coefficients constants, système linéaire.
+- **Mode inventaire, convention des filles.** Par défaut (`input-only`), la sortie ne liste que
+  les nucléides de l'entrée : les filles hors liste sont calculées mais masquées, comme dans les
+  inventaires industriels qui ne listent pas les filles à vie courte en équilibre (Y-90 sous
+  Sr-90, Ba-137m sous Cs-137). Avec `all`, elles apparaissent et l'activité totale change. Les deux
+  résultats sont exacts ; ils ne répondent pas à la même question.
+- Les totaux α et β/γ classent chaque nucléide par son **mode de décroissance principal**
+  (Pu-241, β⁻ à 99,998 %, compte en β/γ).
+- Un nucléide stable n'a pas d'activité : il n'apparaît ni en entrée ni en sortie du mode
+  inventaire.
 - Rapports d'embranchement et demi-vies tirés d'une bibliothèque évaluée, avec leur provenance.
 - Convention d'année : **année julienne, 365,25 j = 31 557 600 s**.
 - Arithmétique IEEE-754 `double` stricte : le projet **refuse `-ffast-math`** et désactive la
@@ -120,21 +129,48 @@ ctest --preset dev
 Sous Windows avec MSVC, lancer ces commandes depuis un *x64 Native Tools Command Prompt* (ou
 après `vcvars64.bat`).
 
-## 8. Exemple
+## 8. Exemple : vieillir un inventaire
 
-Lot 0 : l'exécutable n'expose que sa provenance.
+Un inventaire est un fichier `nuclide;valeur`, virgule ou point décimal, graphies usuelles des
+noms acceptées (`Cs137`, `Cs-137`, `137Cs`, `Ag108m`). Ici trois nucléides en proportions
+normalisées, vieillis de six ans :
+
+```
+Cs137;1,10E-02
+Pu241;1.21e-1
+Am241;3.93e-4
+```
 
 ```bash
-./build/dev/apps/decaysolver --provenance
+./build/dev/apps/decaysolver age --input spectre.csv --kind fraction --age 6a
 ```
 
 ```
 # decaysolver: 0.1.0
-# git_sha: 0123456789ab (capturé à la configuration CMake)
-# compiler: GNU 14.2.0
+# git_sha: 7bb3639a5fc1 (capturé à la configuration CMake)
+# compiler: MSVC 19.44.35217.0
 # build_type: Debug
-# generated_utc: 2026-09-05T13:04:00Z
+# generated_utc: 2026-09-05T14:16:35Z
+# data: source: ICRP Publication 107, Nuclear Decay Data for Dosimetric Calculations (2008),
+# data: […]  (toute la provenance des données est recopiée)
+# input: spectre.csv vieilli de 6a
+# input_kind: fraction
+# age_s: 189345600 (année julienne = 31 557 600 s)
+# daughters: input-only
+# total_activity: 0.101535
+# alpha_activity: 0.00139493
+# beta_gamma_activity: 0.10014
+# beta_gamma_over_alpha: 71.7884
+nuclide;activity;fraction;primary_mode
+Cs-137;9.583412e-03;9.438554e-02;beta-
+Pu-241;9.055640e-02;8.918760e-01;beta-
+Am-241;1.394930e-03;1.373845e-02;alpha
 ```
+
+L'Am-241 a été alimenté par la décroissance β⁻ du Pu-241 ; avec `--daughters all`, les filles
+hors liste (par exemple Ba-137m sous Cs-137) apparaissent et modifient toutes les fractions.
+Options : `--kind bq|fraction`, `--daughters input-only|all`, `--library`, `--output`.
+Durées : `6a`, `30j`, `12h`, `90min`, `0s` (année julienne).
 
 ## 9. Données nucléaires
 

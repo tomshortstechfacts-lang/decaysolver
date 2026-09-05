@@ -8,6 +8,12 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 ## [Unreleased]
 
 ### Added
+- Mode inventaire (`decaysolver/inventory.hpp`) : lecture `nuclide;valeur` (virgule ou point
+  décimal, graphies usuelles), vieillissement par la solution analytique, renormalisation,
+  totaux α / β-γ par mode principal, convention des filles `input-only` (défaut) ou `all`,
+  sortie CSV avec provenance du code, des données et du cas.
+- Ligne de commande `decaysolver age --input … --age 6a [--kind bq|fraction]
+  [--daughters input-only|all] [--library …] [--output …]`.
 - Système de décroissance (`decaysolver/decay_system.hpp`) : fermeture par filiation, ordre
   topologique (A triangulaire inférieure), termes de production, second membre.
 - Solution analytique de Bateman (`decaysolver/bateman.hpp`) sur graphe branché quelconque par
