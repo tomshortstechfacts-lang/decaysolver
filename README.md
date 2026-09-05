@@ -15,7 +15,7 @@ savoir ce que vaut le chiffre obtenu.
 |---|---|---|
 | 0 | Structure, CMake strict, conversions d'unités, provenance, CI | ✅ |
 | 1 | Bibliothèque de nucléides, Bateman analytique avec cas dégénérés, Euler explicite/implicite, Crank–Nicolson, RK4, mode inventaire et ligne de commande | ✅ |
-| 2 | Oracle multiprécision, ordres de convergence mesurés, cas dégénérés, rapport de vérification | ⬜ |
+| 2 | Oracle multiprécision, ordres de convergence mesurés et vérifiés en CI, cas dégénérés, rapport de vérification | ✅ |
 | 3 | Exponentielle de matrice, non-régression, sanitizers, couverture, bibliothèque complète | ⬜ |
 | 4 | Évaluation croisée avec `radioactivedecay`, DOI | ⬜ |
 
@@ -80,18 +80,21 @@ triangulaire inférieure.
 
 ## 5. Domaine de validité
 
-Premiers chiffres, à consolider dans le rapport de vérification (lot 2) :
+Chiffres établis par le [rapport de vérification](verification/report/verification_report.md) :
 
 - **Solution analytique.** Cas sains (D4, $\lambda = (1,2,3)$) : erreur relative $\le 10^{-14}$.
   Cas quasi dégénérés (D2, écarts $10^{-7}$ ; D3, écarts $10^{-11}$) : $\le 10^{-12}$ grâce aux
   différences divisées ; la somme fermée classique donne respectivement $2\cdot10^{-3}$ d'erreur et
-  **exactement 0**. Chaîne du Ra-226 (constantes étalées sur 14 ordres de grandeur) : semi-groupe
-  vérifié à $10^{-10}$.
+  **exactement 0**. Chaîne réelle du Ra-226 (15 nucléides, constantes étalées sur 14 ordres de
+  grandeur) : écart max $4\cdot10^{-13}$ contre l'oracle multiprécision, semi-groupe vérifié à
+  $10^{-10}$. La raideur ne dégrade pas la formule analytique ; les constantes proches, si.
 - **Conservation du nombre d'atomes** : exacte à $10^{-14}$ sur des données à rapports
   d'embranchement exacts ; sur ICRP-107, limitée par les arrondis des rapports (Bi-210 :
   $1 + 1{,}3\cdot10^{-6}$), et par les voies de fission spontanée non suivies ($\le 1{,}4\cdot10^{-6}$).
-- **Intégrateurs** : ordres observés 1, 1, 2, 4 à $\pm 0{,}1$ sur le problème non raide
-  $\lambda = (1,2,3,0)$, $T = 4$. En régime raide, seul Euler implicite est utilisable.
+- **Intégrateurs** : ordres observés 1,00 / 1,00 / 2,00 / 4,0 à $\pm 0{,}1$ sur le problème non
+  raide $\lambda = (1,2,3,0)$, $T = 4$, avec plancher d'arrondi atteint par RK4 vers $10^{-13}$
+  (l'ordre observé s'effondre ensuite, comme attendu). En régime raide, seul Euler implicite est
+  utilisable.
 - **Données** : les incertitudes des demi-vies évaluées (non fournies par ICRP-107) dépassent
   l'erreur numérique ; voir `data/PROVENANCE.md`.
 
@@ -108,12 +111,18 @@ dans son domaine de validation).
 | Niveau | Contenu | Terme ASN | État |
 |---|---|---|---|
 | T1 | Unitaires : conversions, parsing, noms de nucléides, validation de la bibliothèque ($\sum b = 1$, filles présentes, absence de cycle) | vérification | ✅ |
-| T2 | Solutions analytiques : formules fermées à un et deux corps, Sr-90/Y-90, équilibre séculaire ; oracle mpmath sur le jeu D | vérification (cas de validation analytiques) | ✅ partiel (oracle complet : lot 2) |
-| T3 | Ordres de convergence observés vs théoriques | vérification | ✅ contrôle à deux raffinements (protocole complet : lot 2) |
+| T2 | Solutions analytiques : formules fermées, Sr-90/Y-90, équilibre séculaire ; **oracle mpmath** sur le jeu D, sur (1,2,3,0) et sur la chaîne réelle Ra-226 → Pb-206 (15 nucléides, 3 échéances : écart max 4·10⁻¹³) | vérification (cas de validation analytiques) | ✅ |
+| T3 | Ordres de convergence observés vs théoriques : 1,00 / 1,00 / 2,00 / 4,0 sur 15 raffinements, normes L∞ et L2, plancher d'arrondi mesuré ; **vérifié automatiquement** par `decaysolver_convergence` (ctest + job CI) | vérification | ✅ |
 | T4 | Invariants : $N(0) = N_0$ bit à bit, positivité, conservation, semi-groupe $\Phi(t_1+t_2)=\Phi(t_2)\circ\Phi(t_1)$ | vérification | ✅ |
 | T5 | Cas dégénérés D1–D3, formule naïve en `[known-limitation]`, raideur (D5) : L-stabilité, concentrations négatives de Crank–Nicolson, divergence d'Euler explicite | vérification | ✅ |
 | T6 | Non-régression, sorties figées avec tolérances | vérification | ⬜ |
 | T7 | Évaluation croisée avec un outil de référence (`radioactivedecay`) | validation | ⬜ |
+
+**Rapport de vérification** : [`verification/report/verification_report.md`](verification/report/verification_report.md)
+(matrice phénomène × cas, tableaux et figures des ordres de convergence, domaine de validité
+chiffré, limitations). Figures :
+
+![Ordres de convergence, erreur L∞](verification/V2_order_of_accuracy/figures/convergence_Linf.png)
 
 ## 7. Installation
 

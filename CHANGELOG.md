@@ -8,6 +8,13 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 ## [Unreleased]
 
 ### Added
+- Vérification (lot 2) : oracle mpmath indépendant (`verification/scripts/oracle_common.py`,
+  formule fermée à 50 chiffres, superposition des chemins) pour la chaîne (1,2,3,0) et la chaîne
+  réelle Ra-226 → Pb-206 à 30 j, 1 a, 100 a ; test V1 confrontant la solution analytique à ces
+  oracles ; exécutable `decaysolver_convergence` (V2) mesurant les ordres des quatre schémas sur
+  15 raffinements, normes L∞ et L2, critère d'acceptation ±0,1 sur ≥ 4 raffinements au-dessus du
+  plancher d'arrondi, code de retour exploité par ctest et par un job CI dédié ; figures log-log
+  et tableaux générés par `verification/scripts/plot_convergence.py` ; rapport de vérification.
 - Mode inventaire (`decaysolver/inventory.hpp`) : lecture `nuclide;valeur` (virgule ou point
   décimal, graphies usuelles), vieillissement par la solution analytique, renormalisation,
   totaux α / β-γ par mode principal, convention des filles `input-only` (défaut) ou `all`,
