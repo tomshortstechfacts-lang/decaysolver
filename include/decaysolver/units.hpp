@@ -9,6 +9,8 @@
 
 namespace decaysolver::units {
 
+inline constexpr double seconds_per_microsecond = 1e-6;
+inline constexpr double seconds_per_millisecond = 1e-3;
 inline constexpr double seconds_per_minute = 60.0;
 inline constexpr double seconds_per_hour = 3'600.0;
 inline constexpr double seconds_per_day = 86'400.0;
@@ -19,7 +21,7 @@ inline constexpr double seconds_per_day = 86'400.0;
 /// exactement 7e-4 : invisible à trois chiffres significatifs, mais à déclarer.
 inline constexpr double seconds_per_year = 31'557'600.0;
 
-enum class TimeUnit { second, minute, hour, day, year };
+enum class TimeUnit { microsecond, millisecond, second, minute, hour, day, year };
 
 /// Convertit `value` exprimée dans `unit` en secondes.
 [[nodiscard]] double to_seconds(double value, TimeUnit unit);

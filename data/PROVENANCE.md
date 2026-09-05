@@ -22,6 +22,21 @@ Vérification de l'empreinte :
 sha256sum -c data/nuclides_icrp107.sha256
 ```
 
+## `nuclides_icrp107_full.csv` (bibliothèque complète, optionnelle)
+
+Même source, même script avec l'option `--full` : **les 1512 nucléides** du jeu redistribué,
+1881 voies. À passer par `--library data/nuclides_icrp107_full.csv`. SHA-256 dans
+[`nuclides_icrp107_full.sha256`](nuclides_icrp107_full.sha256).
+
+Différence avec la bibliothèque de base : pour **sept nucléides exotiques** (U-228, Es-254m,
+Es-250, Ac-223, Cm-240, Po-212m, Po-205), le jeu redistribué omet une voie dont on n'a pas vérifié
+la fille sur une seconde source. Plutôt que d'inventer une fille ou de rejeter le fichier, le
+script ajoute une voie **`unlisted`** sans fille, de rapport égal au déficit (de 6·10⁻⁴ à
+2,5·10⁻²) : les noyaux concernés quittent le système, comme pour la fission spontanée, et le
+déficit reste lisible dans le fichier et dans son en-tête. Aucun de ces nucléides n'intervient dans
+les chaînes de la liste standard de déclaration des déchets. Unités supplémentaires rencontrées :
+`ms` et `μs` (acceptée aussi sous la graphie `us`).
+
 ### Format
 
 Une ligne par voie de décroissance, séparateur `;`, en-tête `#` recopié dans la provenance des
@@ -38,8 +53,8 @@ Ba-137;stable;;stable;;
   La conversion en secondes est faite par decaysolver avec **1 y = 365,25 j** (année julienne).
   `radioactivedecay` utilise 365,2422 j : écart relatif 2·10⁻⁵ sur les demi-vies exprimées en
   années, à retrancher avant d'interpréter une évaluation croisée.
-- `mode` ∈ {`alpha`, `beta-`, `beta+/EC`, `IT`, `SF`, `stable`}. ICRP-107 regroupe β⁺ et
-  capture électronique.
+- `mode` ∈ {`alpha`, `beta-`, `beta+/EC`, `IT`, `SF`, `unlisted`, `stable`}. ICRP-107 regroupe
+  β⁺ et capture électronique. `unlisted` n'apparaît que dans la bibliothèque complète.
 - `SF` (fission spontanée) : voie conservée avec `daughter` vide ; les produits de fission ne
   sont pas suivis. Les rapports concernés sont ≤ 1,4·10⁻⁶ sur ce jeu.
 

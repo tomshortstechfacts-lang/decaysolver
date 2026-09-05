@@ -78,6 +78,20 @@ TEST_CASE("system: ordre topologique sur un graphe branche", "[system][T1][data]
     }
 }
 
+TEST_CASE("system: bibliotheque complete chargee et ordonnee", "[system][T1][data]") {
+    const NuclideLibrary full = NuclideLibrary::load(std::filesystem::path(DECAYSOLVER_DATA_DIR) /
+                                                     "nuclides_icrp107_full.csv");
+    REQUIRE(full.size() == 1512);
+    REQUIRE(full.contains("Bi-212n"));
+    const DecaySystem all = DecaySystem::build(full, full.names());
+    REQUIRE(all.size() == 1512);
+    for (std::size_t j = 0; j < all.size(); ++j) {
+        for (const decaysolver::Production& daughter : all.daughters()[j]) {
+            REQUIRE(daughter.parent > j);
+        }
+    }
+}
+
 TEST_CASE("system: fission spontanee exclue, graine inconnue rejetee", "[system][T1][data]") {
     const DecaySystem system = DecaySystem::build(icrp_library(), {"U-238"});
     REQUIRE(system.daughters()[system.index_of("U-238")].size() == 1); // Th-234 seulement

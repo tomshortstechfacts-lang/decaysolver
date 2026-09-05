@@ -10,6 +10,10 @@ namespace decaysolver::units {
 
 double to_seconds(double value, TimeUnit unit) {
     switch (unit) {
+    case TimeUnit::microsecond:
+        return value * seconds_per_microsecond;
+    case TimeUnit::millisecond:
+        return value * seconds_per_millisecond;
     case TimeUnit::second:
         return value;
     case TimeUnit::minute:

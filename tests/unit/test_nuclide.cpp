@@ -22,7 +22,7 @@ TEST_CASE("nuclide: normalisation des noms", "[nuclide][T1]") {
         {"Cs 137", "Cs-137"},     {"Ag-108m", "Ag-108m"}, {"Ag108m", "Ag-108m"},
         {"ag108M", "Ag-108m"},    {"U-235m", "U-235m"},   {"U235", "U-235"},
         {"235U", "U-235"},        {"H-3", "H-3"},         {"3H", "H-3"},
-        {"Am-242m1", "Am-242m1"},
+        {"Am-242m1", "Am-242m1"}, {"Bi-212n", "Bi-212n"}, {"bi212N", "Bi-212n"},
     };
     for (const auto& [input, expected] : cases) {
         INFO("entrée : '" << input << "'");
@@ -32,7 +32,7 @@ TEST_CASE("nuclide: normalisation des noms", "[nuclide][T1]") {
 
 TEST_CASE("nuclide: graphies rejetees", "[nuclide][T1]") {
     for (const char* bad : {"", "Cs", "137", "Cs-", "Cesium-137", "Cs-1370", "Cs-0", "Cs-137x",
-                            "Cs-137mm", "137mBa", "Cs-13-7", "-"}) {
+                            "Cs-137mm", "137mBa", "Cs-13-7", "-", "Bi-212n1", "Bi-212p"}) {
         INFO("entrée : '" << bad << "'");
         REQUIRE_THROWS_AS(decaysolver::canonical_name(bad), std::invalid_argument);
     }
@@ -40,9 +40,9 @@ TEST_CASE("nuclide: graphies rejetees", "[nuclide][T1]") {
 
 TEST_CASE("nuclide: modes de decroissance", "[nuclide][T1]") {
     using decaysolver::DecayMode;
-    for (const DecayMode mode :
-         {DecayMode::alpha, DecayMode::beta_minus, DecayMode::beta_plus_ec,
-          DecayMode::isomeric_transition, DecayMode::spontaneous_fission, DecayMode::stable}) {
+    for (const DecayMode mode : {DecayMode::alpha, DecayMode::beta_minus, DecayMode::beta_plus_ec,
+                                 DecayMode::isomeric_transition, DecayMode::spontaneous_fission,
+                                 DecayMode::unlisted, DecayMode::stable}) {
         REQUIRE(decaysolver::decay_mode_from_string(decaysolver::to_string(mode)) == mode);
     }
     REQUIRE(decaysolver::decay_mode_from_string("beta-") == DecayMode::beta_minus);

@@ -71,6 +71,8 @@ TEST_CASE("units: constante de decroissance vers demi-vie", "[units][T1]") {
 }
 
 TEST_CASE("units: conversion vers les secondes", "[units][T1]") {
+    REQUIRE_THAT(units::to_seconds(1.0, units::TimeUnit::microsecond), WithinRel(1e-6, one_ulp));
+    REQUIRE_THAT(units::to_seconds(1.0, units::TimeUnit::millisecond), WithinRel(1e-3, one_ulp));
     REQUIRE_THAT(units::to_seconds(1.0, units::TimeUnit::second), WithinRel(1.0, one_ulp));
     REQUIRE_THAT(units::to_seconds(1.0, units::TimeUnit::minute), WithinRel(60.0, one_ulp));
     REQUIRE_THAT(units::to_seconds(1.0, units::TimeUnit::hour), WithinRel(3'600.0, one_ulp));

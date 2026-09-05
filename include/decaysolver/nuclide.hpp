@@ -14,18 +14,22 @@
 namespace decaysolver {
 
 /// Modes de décroissance retenus. `beta_plus_ec` regroupe β⁺ et capture électronique, qui
-/// mènent à la même fille ; ICRP-107 les regroupe de la même façon.
+/// mènent à la même fille ; ICRP-107 les regroupe de la même façon. `unlisted` désigne une voie
+/// dont le jeu de données ne donne pas la fille (rapport = complément à 1 des voies connues) :
+/// comme la fission spontanée, les noyaux quittent le système. Elle n'apparaît que dans la
+/// bibliothèque complète, pour sept nucléides exotiques (voir data/PROVENANCE.md).
 enum class DecayMode {
     alpha,
     beta_minus,
     beta_plus_ec,
     isomeric_transition,
     spontaneous_fission,
+    unlisted,
     stable
 };
 
 /// Lecture du mode depuis le fichier de données : "alpha", "beta-", "beta+/EC", "IT", "SF",
-/// "stable".
+/// "unlisted", "stable".
 /// @throws std::invalid_argument pour tout autre texte.
 [[nodiscard]] DecayMode decay_mode_from_string(std::string_view text);
 
@@ -35,8 +39,9 @@ enum class DecayMode {
 /// Une voie de décroissance.
 struct DecayBranch {
     DecayMode mode;
-    /// Fille dans sa forme canonique ; vide pour la fission spontanée, dont les produits ne sont
-    /// pas suivis (les noyaux quittent alors le système : la conservation ne s'applique plus).
+    /// Fille dans sa forme canonique ; vide pour la fission spontanée et les voies non
+    /// répertoriées, dont les produits ne sont pas suivis (les noyaux quittent alors le système :
+    /// la conservation ne s'applique plus).
     std::string daughter;
     double branching_fraction;
 };
@@ -54,7 +59,8 @@ struct Nuclide {
     [[nodiscard]] DecayMode primary_mode() const;
 };
 
-/// Normalise une graphie usuelle vers la forme canonique "Xx-NNN" ou "Xx-NNNm".
+/// Normalise une graphie usuelle vers la forme canonique "Xx-NNN", "Xx-NNNm" ou "Xx-NNNn"
+/// (second isomère, notation ICRP-107 : "Bi-212n").
 ///
 /// Graphies acceptées : "Cs-137", "Cs137", "cs137", "CS-137", "137Cs", "Ag-108m", "Ag108m".
 /// La forme à nombre de masse en tête ("137Cs") n'accepte pas d'indicateur d'isomère, pour ne

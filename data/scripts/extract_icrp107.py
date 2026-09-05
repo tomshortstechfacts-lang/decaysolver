@@ -7,7 +7,8 @@ decaysolver lui-même (année julienne 365,25 j), pas ici : la donnée committé
 source, pas une donnée dérivée.
 
 Usage (depuis la racine du dépôt, environnement Python avec radioactivedecay) :
-    python data/scripts/extract_icrp107.py
+    python data/scripts/extract_icrp107.py          # 35 nucléides + descendants
+    python data/scripts/extract_icrp107.py --full   # les 1512 nucléides du jeu
 
 Le fichier produit est déterministe (tri par nom) : deux exécutions donnent le même SHA-256.
 """
@@ -38,7 +39,11 @@ MODE_MAP = {
     "β+ & EC": "beta+/EC",
     "IT": "IT",
     "SF": "SF",
+    "unlisted": "unlisted",
 }
+
+# Tolérance du chargeur de decaysolver sur |Σ b − 1| ; au-delà, le fichier est refusé.
+LOADER_TOLERANCE = 5e-4
 
 HEADER = "nuclide;half_life_value;half_life_unit;mode;daughter;branching_fraction"
 
@@ -57,13 +62,21 @@ MISSING_BRANCHES = {
 SUM_REPORT_THRESHOLD = 1e-5
 
 
-def branches_of(data: rd.DecayData, name: str) -> list[tuple[str, str, float]]:
-    """Voies (mode, fille, rapport) d'un nucléide, voies manquantes rétablies."""
+def branches_of(data: rd.DecayData, name: str, full: bool = False) -> list[tuple[str, str, float]]:
+    """Voies (mode, fille, rapport) d'un nucléide, voies manquantes rétablies.
+
+    En mode --full, un déficit de somme au-delà de la tolérance du chargeur (nucléides exotiques
+    dont le jeu redistribué omet une voie sans qu'on ait vérifié la fille sur une seconde source)
+    devient une voie `unlisted` sans fille : le déficit reste visible dans le fichier et la somme
+    des rapports vaut 1. Les nucléides concernés sont listés dans l'en-tête."""
     index = data.nuclide_dict[name]
     branches = list(zip(data.modes[index], data.progeny[index], (float(b) for b in data.bfs[index])))
     if name in MISSING_BRANCHES:
         mode, daughter = MISSING_BRANCHES[name]
         branches.append((mode, daughter, 1.0 - sum(b for _, _, b in branches)))
+    deficit = 1.0 - sum(b for _, _, b in branches)
+    if full and deficit > LOADER_TOLERANCE:
+        branches.append(("unlisted", "", deficit))
     return branches
 
 
@@ -90,10 +103,25 @@ def rows_for(data: rd.DecayData, name: str) -> list[str]:
     if is_stable(data, name):
         return [f"{name};stable;;stable;;"]
     lines = []
-    for mode, daughter, fraction in branches_of(data, name):
+    for mode, daughter, fraction in branches_of(data, name, FULL_MODE[0]):
         daughter_out = "" if daughter == "SF" else daughter
         lines.append(f"{name};{float(value):.10g};{unit};{MODE_MAP[mode]};{daughter_out};{fraction:.10g}")
     return lines
+
+
+FULL_MODE = [False]  # positionné par main() ; évite de propager un paramètre partout
+
+
+def unlisted_nuclides(data: rd.DecayData, names: list[str]) -> list[tuple[str, float]]:
+    """Nucléides recevant une voie `unlisted` en mode --full, avec le déficit."""
+    out = []
+    for name in names:
+        if is_stable(data, name):
+            continue
+        deficit = 1.0 - sum(b for _, _, b in branches_of(data, name))
+        if deficit > LOADER_TOLERANCE:
+            out.append((name, deficit))
+    return sorted(out, key=lambda item: -item[1])
 
 
 def sum_deviations(data: rd.DecayData, names: list[str]) -> list[tuple[str, float]]:
@@ -110,9 +138,17 @@ def sum_deviations(data: rd.DecayData, names: list[str]) -> list[tuple[str, floa
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
-    out_path = repo_root / "data" / "nuclides_icrp107.csv"
     data = rd.DEFAULTDATA
-    names = closure(data, BASE_NUCLIDES)
+    full = "--full" in sys.argv
+    FULL_MODE[0] = full
+    if full:
+        # Bibliothèque complète : tous les nucléides du jeu ICRP-107 redistribué (1512), fermeture
+        # incluse par construction. Fichier data/nuclides_icrp107_full.csv, à passer par --library.
+        out_path = repo_root / "data" / "nuclides_icrp107_full.csv"
+        names = sorted(str(n) for n in data.nuclides)
+    else:
+        out_path = repo_root / "data" / "nuclides_icrp107.csv"
+        names = closure(data, BASE_NUCLIDES)
 
     header_lines = [
         "# decaysolver — bibliothèque de nucléides",
@@ -120,8 +156,11 @@ def main() -> int:
         "#         Copyright (c) 2008 A. Endo and K.F. Eckerman ; licence : data/LICENSE.ICRP-07",
         f"# extraction: paquet radioactivedecay {rd.__version__}, jeu '{data.dataset_name}'",
         f"# script: data/scripts/extract_icrp107.py ; date UTC: {dt.datetime.now(dt.timezone.utc):%Y-%m-%d}",
-        f"# contenu: {len(BASE_NUCLIDES)} nucléides de base (liste standard de déclaration des déchets)",
-        f"#          + fermeture complète de leurs descendants = {len(names)} nucléides",
+        (f"# contenu: bibliothèque complète, {len(names)} nucléides du jeu ICRP-107 redistribué"
+         if full else
+         f"# contenu: {len(BASE_NUCLIDES)} nucléides de base (liste standard de déclaration des déchets)"),
+        ("#          (--full)" if full else
+         f"#          + fermeture complète de leurs descendants = {len(names)} nucléides"),
         "# demi-vies: valeur et unité d'origine ICRP-107 (s, m, h, d, y) ; aucune conversion ici.",
         "#            decaysolver convertit avec 1 y = 365,25 j (année julienne) ;",
         "#            radioactivedecay utilise 365,2422 j : écart relatif 2e-5, à garder en tête",
@@ -133,7 +172,14 @@ def main() -> int:
         "# écarts |somme des rapports - 1| > 1e-5, dus aux arrondis indépendants d'ICRP-107 :",
     ]
     for name, deviation in sum_deviations(data, names):
+        if full and deviation < -LOADER_TOLERANCE:
+            continue  # traité ci-dessous comme voie non répertoriée
         header_lines.append(f"#     {name}: {deviation:+.1e}")
+    if full:
+        header_lines.append("# voies non répertoriées (déficit de somme > 5e-4 dans le jeu redistribué, fille")
+        header_lines.append("#   inconnue, noyaux sortant du système) : ")
+        for name, deficit in unlisted_nuclides(data, names):
+            header_lines.append(f"#     {name}: {deficit:.1e}")
     header_lines += [
         "# une ligne par voie de décroissance ; les stables ont une seule ligne 'stable'.",
         HEADER,
@@ -143,8 +189,8 @@ def main() -> int:
     out_path.write_text(text, encoding="utf-8", newline="\n")
 
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-    (repo_root / "data" / "nuclides_icrp107.sha256").write_text(
-        f"{digest}  nuclides_icrp107.csv\n", encoding="utf-8", newline="\n")
+    out_path.with_suffix(".sha256").write_text(
+        f"{digest}  {out_path.name}\n", encoding="utf-8", newline="\n")
     print(f"{out_path.relative_to(repo_root)} : {len(names)} nucléides, {len(body)} voies")
     print(f"SHA-256 : {digest}")
     return 0

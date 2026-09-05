@@ -24,6 +24,7 @@ constexpr ModeName mode_names[] = {
     {DecayMode::beta_plus_ec, "beta+/EC"},
     {DecayMode::isomeric_transition, "IT"},
     {DecayMode::spontaneous_fission, "SF"},
+    {DecayMode::unlisted, "unlisted"},
     {DecayMode::stable, "stable"},
 };
 
@@ -128,7 +129,8 @@ std::string canonical_name(std::string_view raw) {
         symbol = std::string_view(compact).substr(i);
     }
 
-    // 3. Contrôles : symbole de 1 ou 2 lettres, masse de 1 à 3 chiffres, isomère "m" ou "m<n>".
+    // 3. Contrôles : symbole de 1 ou 2 lettres, masse de 1 à 3 chiffres, isomère "m", "n" (second
+    //    isomère, ICRP-107) ou "m<chiffre>".
     if (symbol.empty() || symbol.size() > 2 ||
         !std::all_of(symbol.begin(), symbol.end(), is_letter)) {
         throw fail();
@@ -142,9 +144,10 @@ std::string canonical_name(std::string_view raw) {
         throw fail();
     }
     if (!isomer.empty()) {
+        const char flag = static_cast<char>(std::tolower(static_cast<unsigned char>(isomer[0])));
         const bool well_formed =
-            (isomer[0] == 'm' || isomer[0] == 'M') &&
-            (isomer.size() == 1 || (isomer.size() == 2 && is_digit(isomer[1])));
+            (flag == 'm' || flag == 'n') &&
+            (isomer.size() == 1 || (isomer.size() == 2 && flag == 'm' && is_digit(isomer[1])));
         if (!well_formed) {
             throw fail();
         }
@@ -152,7 +155,7 @@ std::string canonical_name(std::string_view raw) {
 
     std::string out = canonical_symbol(symbol) + "-" + std::string(mass_text);
     if (!isomer.empty()) {
-        out += 'm';
+        out += static_cast<char>(std::tolower(static_cast<unsigned char>(isomer[0])));
         out += isomer.substr(1);
     }
     return out;

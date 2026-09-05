@@ -78,6 +78,16 @@ TEST_CASE("library: invariants violes rejetes", "[library][T1]") {
         REQUIRE_THROWS_AS(parse_text("Sr-90;-28.79;y;beta-;Y-90;1\nY-90;stable;;stable;;\n"),
                           DataError);
     }
+    SECTION("unités sub-seconde d'ICRP-107 : ms, us et μs") {
+        const NuclideLibrary lib = parse_text("Po-212;0.3;\u03bcs;alpha;Pb-208;1\n"
+                                              "Rn-217;0.54;ms;alpha;Po-213;1\n"
+                                              "Po-213;4.2;us;alpha;Pb-209;1\n"
+                                              "Pb-208;stable;;stable;;\n"
+                                              "Pb-209;stable;;stable;;\n");
+        REQUIRE_THAT(lib.get("Po-212").half_life_s, WithinRel(3e-7, 1e-15));
+        REQUIRE_THAT(lib.get("Rn-217").half_life_s, WithinRel(5.4e-4, 1e-15));
+        REQUIRE_THAT(lib.get("Po-213").half_life_s, WithinRel(4.2e-6, 1e-15));
+    }
     SECTION("unité inconnue") {
         REQUIRE_THROWS_AS(parse_text("Sr-90;28.79;an;beta-;Y-90;1\nY-90;stable;;stable;;\n"),
                           DataError);
@@ -92,6 +102,13 @@ TEST_CASE("library: invariants violes rejetes", "[library][T1]") {
         REQUIRE_THROWS_AS(parse_text("Zr-90;stable;;beta-;Y-90;1\nY-90;stable;;stable;;\n"),
                           DataError);
         REQUIRE_THROWS_AS(parse_text("Sr-90;28.79;y;stable;;\n"), DataError);
+    }
+    SECTION("voie non répertoriée : fille vide, comme la fission") {
+        REQUIRE_NOTHROW(parse_text("U-228;9.1;m;alpha;Th-224;0.975\n"
+                                   "U-228;9.1;m;unlisted;;0.025\n"
+                                   "Th-224;stable;;stable;;\n"));
+        REQUIRE_THROWS_AS(parse_text("U-228;9.1;m;unlisted;Th-224;1\nTh-224;stable;;stable;;\n"),
+                          DataError);
     }
     SECTION("fission spontanée : fille vide obligatoire, produits non suivis") {
         REQUIRE_NOTHROW(parse_text("U-238;4.468;y;alpha;Th-234;1\n"

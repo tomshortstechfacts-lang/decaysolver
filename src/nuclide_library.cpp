@@ -53,7 +53,14 @@ double parse_double(std::string_view text, std::size_t line_number, std::string_
     return value;
 }
 
+// Unités d'ICRP-107 : μs (écrit « μs » ou « us »), ms, s, m, h, d, y.
 units::TimeUnit parse_unit(std::string_view text, std::size_t line_number) {
+    if (text == "us" || text == "\u03bcs") {
+        return units::TimeUnit::microsecond;
+    }
+    if (text == "ms") {
+        return units::TimeUnit::millisecond;
+    }
     if (text == "s") {
         return units::TimeUnit::second;
     }
@@ -172,9 +179,12 @@ void NuclideLibrary::validate() const {
                 throw DataError(name + " : rapport d'embranchement hors ]0 ; 1]");
             }
             sum += branch.branching_fraction;
-            if (branch.mode == DecayMode::spontaneous_fission) {
+            if (branch.mode == DecayMode::spontaneous_fission ||
+                branch.mode == DecayMode::unlisted) {
                 if (!branch.daughter.empty()) {
-                    throw DataError(name + " : une voie de fission spontanée n'a pas de fille");
+                    throw DataError(name +
+                                    " : une voie de fission spontanée ou non répertoriée n'a pas "
+                                    "de fille");
                 }
             } else if (!nuclides_.contains(branch.daughter)) {
                 throw DataError(name + " : fille absente de la bibliothèque : " + branch.daughter);
