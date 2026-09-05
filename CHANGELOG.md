@@ -8,6 +8,17 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 ## [Unreleased]
 
 ### Added
+- Lot 3 : test de non-régression T6 (35 nucléides à 1 Bq, 10 ans, deux conventions, référence
+  figée avec provenance) ; jobs CI AddressSanitizer et UndefinedBehaviorSanitizer (Clang 18),
+  couverture gcov/gcovr par fichier publiée dans le résumé du job, documentation Doxygen générée
+  en CI ; exponentielle de matrice SciPy comme troisième voie (`verification/scripts/expm_scipy.py`,
+  rapport `expm_comparison.md`) ; bibliothèque complète `data/nuclides_icrp107_full.csv`
+  (1512 nucléides, mode `unlisted` pour sept déficits de somme documentés, unités ms et μs,
+  isomères `n`) ; ADR 0001–0003 dans `docs/adr/`.
+- Lot 4 : évaluation croisée T7 avec `radioactivedecay` (`validation/cross_radioactivedecay.py`,
+  35 nucléides, convention `all`, conventions d'année isolées, comparaison au mode haute
+  précision SymPy de l'outil de référence).
+- Sortie CSV du mode inventaire à 17 chiffres significatifs (relecture exacte du `double`).
 - Vérification (lot 2) : oracle mpmath indépendant (`verification/scripts/oracle_common.py`,
   formule fermée à 50 chiffres, superposition des chemins) pour la chaîne (1,2,3,0) et la chaîne
   réelle Ra-226 → Pb-206 à 30 j, 1 a, 100 a ; test V1 confrontant la solution analytique à ces
