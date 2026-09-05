@@ -8,6 +8,20 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 ## [Unreleased]
 
 ### Added
+- Système de décroissance (`decaysolver/decay_system.hpp`) : fermeture par filiation, ordre
+  topologique (A triangulaire inférieure), termes de production, second membre.
+- Solution analytique de Bateman (`decaysolver/bateman.hpp`) sur graphe branché quelconque par
+  superposition des chemins ; somme de Bateman calculée comme différence divisée de l'exponentielle,
+  cas dégénérés et quasi dégénérés traités par série de Taylor autour des groupes de nœuds proches
+  (McCurdy, Ng & Parlett 1984), reste de série majoré rigoureusement. Formule naïve conservée à
+  part pour documenter la pathologie d'annulation.
+- Intégrateurs à pas fixe (`decaysolver/integrator.hpp`) : Euler explicite, Euler implicite,
+  Crank–Nicolson, RK4 ; schémas implicites par substitution avant.
+- Oracle mpmath `verification/scripts/oracle_degenerate.py` pour les cas D1–D4.
+- Tests T2 (formules fermées, Sr-90/Y-90, équilibre séculaire), T3 (ordres observés des quatre
+  schémas à ±0,1), T4 (N(0)=N₀ bit à bit, positivité, conservation, semi-groupe sur la chaîne du
+  Ra-226), T5 (D1–D3 corrigés, D2–D3 naïfs en `[known-limitation]`, raideur : L-stabilité
+  d'Euler implicite, concentration négative de Crank–Nicolson, divergence d'Euler explicite).
 - Bibliothèque de nucléides (`decaysolver/nuclide.hpp`, `decaysolver/nuclide_library.hpp`) :
   noms canoniques (graphies usuelles acceptées), modes de décroissance, voies avec rapports
   d'embranchement, chargement CSV validé (Σ b = 1 à 5e-4, filles présentes, absence de cycle).
@@ -25,4 +39,6 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
   Release, vérification `clang-format` bloquante.
 
 ### Numerics
-- Aucun résultat numérique produit à ce stade.
+- Première version du cœur numérique. Conservation du nombre d'atomes sur données ICRP-107 exacte
+  au niveau des arrondis des rapports d'embranchement (jusqu'à 1,3e-6 sur Bi-210), pas de
+  l'arithmétique.

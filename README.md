@@ -14,7 +14,7 @@ savoir ce que vaut le chiffre obtenu.
 | Lot | Contenu | État |
 |---|---|---|
 | 0 | Structure, CMake strict, conversions d'unités, provenance, CI | ✅ |
-| 1 | Bibliothèque de nucléides (✅), Bateman analytique (cas dégénéré inclus), Euler implicite, RK4, mode inventaire | 🔶 en cours |
+| 1 | Bibliothèque de nucléides (✅), Bateman analytique avec cas dégénérés (✅), Euler explicite/implicite, Crank–Nicolson, RK4 (✅), mode inventaire (⬜) | 🔶 en cours |
 | 2 | Oracle multiprécision, ordres de convergence mesurés, cas dégénérés, rapport de vérification | ⬜ |
 | 3 | Exponentielle de matrice, non-régression, sanitizers, couverture, bibliothèque complète | ⬜ |
 | 4 | Évaluation croisée avec `radioactivedecay`, DOI | ⬜ |
@@ -40,10 +40,15 @@ les colonnes de $A$ somment à zéro et le nombre total d'atomes est conservé.
 
 | Méthode | Ordre | Quand l'utiliser | État |
 |---|---|---|---|
-| Formule analytique de Bateman | exacte | référence ; instable si deux $\lambda$ sont proches (annulation) | ⬜ lot 1 |
-| Exponentielle de matrice (Padé, scaling-and-squaring) | exacte | référence indépendante, graphes généraux | ⬜ lot 3 |
-| Euler implicite | 1 | problèmes raides, positivité garantie | ⬜ lot 1 |
-| RK4 explicite | 4 | problèmes non raides, mesure d'ordre | ⬜ lot 1 |
+| Formule analytique de Bateman, par différences divisées de l'exponentielle | exacte | référence ; les $\lambda$ proches ou égaux sont traités par série de Taylor (McCurdy, Ng & Parlett) au lieu de la somme fermée, qui perd ses chiffres par annulation | ✅ |
+| Exponentielle de matrice (SciPy, Padé + scaling-and-squaring) | exacte | référence indépendante, côté Python | ⬜ lot 3 |
+| Euler implicite | 1 | problèmes raides ; L-stable, positivité garantie (A de Metzler) | ✅ |
+| Crank–Nicolson | 2 | non raide seulement : A-stable mais **non L-stable**, produit des concentrations négatives sur les modes raides | ✅ |
+| Euler explicite | 1 | pédagogique ; stable si $h\lambda_{max} \le 2$ | ✅ |
+| RK4 explicite | 4 | problèmes non raides, mesure d'ordre ; stable si $h\lambda_{max} \le 2{,}785$ | ✅ |
+
+Les schémas implicites se résolvent par substitution avant : dans l'ordre topologique, $A$ est
+triangulaire inférieure.
 
 ## 3. Hypothèses
 
@@ -66,9 +71,20 @@ les colonnes de $A$ somment à zéro et le nombre total d'atomes est conservé.
 
 ## 5. Domaine de validité
 
-À chiffrer avec le rapport de vérification (lot 2) : plage de rapports $\lambda_i/\lambda_j$ où
-la formule analytique reste exacte en `double`, plage de raideur couverte par chaque schéma,
-précision attendue par méthode.
+Premiers chiffres, à consolider dans le rapport de vérification (lot 2) :
+
+- **Solution analytique.** Cas sains (D4, $\lambda = (1,2,3)$) : erreur relative $\le 10^{-14}$.
+  Cas quasi dégénérés (D2, écarts $10^{-7}$ ; D3, écarts $10^{-11}$) : $\le 10^{-12}$ grâce aux
+  différences divisées ; la somme fermée classique donne respectivement $2\cdot10^{-3}$ d'erreur et
+  **exactement 0**. Chaîne du Ra-226 (constantes étalées sur 14 ordres de grandeur) : semi-groupe
+  vérifié à $10^{-10}$.
+- **Conservation du nombre d'atomes** : exacte à $10^{-14}$ sur des données à rapports
+  d'embranchement exacts ; sur ICRP-107, limitée par les arrondis des rapports (Bi-210 :
+  $1 + 1{,}3\cdot10^{-6}$), et par les voies de fission spontanée non suivies ($\le 1{,}4\cdot10^{-6}$).
+- **Intégrateurs** : ordres observés 1, 1, 2, 4 à $\pm 0{,}1$ sur le problème non raide
+  $\lambda = (1,2,3,0)$, $T = 4$. En régime raide, seul Euler implicite est utilisable.
+- **Données** : les incertitudes des demi-vies évaluées (non fournies par ICRP-107) dépassent
+  l'erreur numérique ; voir `data/PROVENANCE.md`.
 
 ## 6. Vérification
 
@@ -83,10 +99,10 @@ dans son domaine de validation).
 | Niveau | Contenu | Terme ASN | État |
 |---|---|---|---|
 | T1 | Unitaires : conversions, parsing, noms de nucléides, validation de la bibliothèque ($\sum b = 1$, filles présentes, absence de cycle) | vérification | ✅ |
-| T2 | Solutions analytiques vs oracle multiprécision, équilibres | vérification (cas de validation analytiques) | ⬜ |
-| T3 | Ordres de convergence observés vs théoriques | vérification | ⬜ |
-| T4 | Invariants : positivité, conservation, semi-groupe, $N(0) = N_0$ | vérification | ⬜ |
-| T5 | Cas dégénérés : $\lambda_i = \lambda_j$, $\lambda = 0$, raideur extrême | vérification | ⬜ |
+| T2 | Solutions analytiques : formules fermées à un et deux corps, Sr-90/Y-90, équilibre séculaire ; oracle mpmath sur le jeu D | vérification (cas de validation analytiques) | ✅ partiel (oracle complet : lot 2) |
+| T3 | Ordres de convergence observés vs théoriques | vérification | ✅ contrôle à deux raffinements (protocole complet : lot 2) |
+| T4 | Invariants : $N(0) = N_0$ bit à bit, positivité, conservation, semi-groupe $\Phi(t_1+t_2)=\Phi(t_2)\circ\Phi(t_1)$ | vérification | ✅ |
+| T5 | Cas dégénérés D1–D3, formule naïve en `[known-limitation]`, raideur (D5) : L-stabilité, concentrations négatives de Crank–Nicolson, divergence d'Euler explicite | vérification | ✅ |
 | T6 | Non-régression, sorties figées avec tolérances | vérification | ⬜ |
 | T7 | Évaluation croisée avec un outil de référence (`radioactivedecay`) | validation | ⬜ |
 
