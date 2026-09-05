@@ -28,9 +28,15 @@ double taylor_cluster(const std::vector<double>& nodes, std::size_t first, std::
     }
     center /= static_cast<double>(count);
 
-    // h_n pour n = 0..max_terms, construits nœud par nœud.
-    std::vector<double> h(options.max_taylor_terms + 1, 0.0);
-    h[0] = 1.0;
+    // h_n pour n = 0..max_terms, construits nœud par nœud. h_0 = 1 est poussé avant le
+    // redimensionnement : le vecteur n'est jamais vide, ce que GCC vérifie (-Wnull-dereference).
+    if (options.max_taylor_terms == 0) {
+        throw std::invalid_argument("série de Taylor : au moins un terme");
+    }
+    std::vector<double> h;
+    h.reserve(options.max_taylor_terms + 1);
+    h.push_back(1.0);
+    h.resize(options.max_taylor_terms + 1, 0.0);
     double spread = 0.0; // S = Σ|δ_m|, pour la majoration du reste
     for (std::size_t m = first; m <= last; ++m) {
         const double delta = nodes[m] - center;
