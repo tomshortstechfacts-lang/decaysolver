@@ -240,14 +240,15 @@ void write_aged_inventory(std::ostream& out, const AgedInventory& aged,
     out << "# age_s: " << std::setprecision(17) << aged.age_s
         << " (année julienne = 31 557 600 s)\n";
     out << "# daughters: " << to_string(aged.policy) << '\n';
-    out << "# total_activity: " << std::setprecision(6) << aged.total << '\n';
+    out << "# total_activity: " << std::setprecision(16) << aged.total << '\n';
     out << "# alpha_activity: " << aged.alpha << '\n';
     out << "# beta_gamma_activity: " << aged.beta_gamma << '\n';
     if (aged.alpha > 0.0) {
         out << "# beta_gamma_over_alpha: " << aged.beta_gamma / aged.alpha << '\n';
     }
     out << "nuclide;activity;fraction;primary_mode\n";
-    out << std::scientific << std::setprecision(6);
+    // 17 chiffres significatifs : un double se relit exactement (aller-retour sans perte).
+    out << std::scientific << std::setprecision(16);
     for (const AgedEntry& entry : aged.entries) {
         out << entry.nuclide << ';' << entry.activity << ';' << entry.fraction << ';'
             << to_string(entry.primary_mode) << '\n';

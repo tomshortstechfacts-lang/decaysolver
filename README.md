@@ -16,8 +16,8 @@ savoir ce que vaut le chiffre obtenu.
 | 0 | Structure, CMake strict, conversions d'unités, provenance, CI | ✅ |
 | 1 | Bibliothèque de nucléides, Bateman analytique avec cas dégénérés, Euler explicite/implicite, Crank–Nicolson, RK4, mode inventaire et ligne de commande | ✅ |
 | 2 | Oracle multiprécision, ordres de convergence mesurés et vérifiés en CI, cas dégénérés, rapport de vérification | ✅ |
-| 3 | Exponentielle de matrice, non-régression, sanitizers, couverture, bibliothèque complète | ⬜ |
-| 4 | Évaluation croisée avec `radioactivedecay`, DOI | ⬜ |
+| 3 | Exponentielle de matrice (SciPy), non-régression, sanitizers, couverture, Doxygen, ADR, bibliothèque complète | ✅ |
+| 4 | Évaluation croisée avec `radioactivedecay` (✅), DOI Zenodo (⬜, nécessite un dépôt public) | 🔶 |
 
 ## 1. Le problème mathématique
 
@@ -41,7 +41,7 @@ les colonnes de $A$ somment à zéro et le nombre total d'atomes est conservé.
 | Méthode | Ordre | Quand l'utiliser | État |
 |---|---|---|---|
 | Formule analytique de Bateman, par différences divisées de l'exponentielle | exacte | référence ; les $\lambda$ proches ou égaux sont traités par série de Taylor (McCurdy, Ng & Parlett) au lieu de la somme fermée, qui perd ses chiffres par annulation | ✅ |
-| Exponentielle de matrice (SciPy, Padé + scaling-and-squaring) | exacte | référence indépendante, côté Python | ⬜ lot 3 |
+| Exponentielle de matrice (SciPy, Padé + scaling-and-squaring) | exacte en théorie | troisième voie de contrôle, côté Python. **En `double`, perd quatre chiffres sur la chaîne du Ra-226 à 100 ans** (‖At‖ ≈ 10¹³ impose ~40 élévations au carré) : bonne pour vérifier, mauvaise pour produire sur un problème raide, ce qui est la raison d'être de CRAM dans les codes industriels | ✅ |
 | Euler implicite | 1 | problèmes raides ; L-stable, positivité garantie (A de Metzler) | ✅ |
 | Crank–Nicolson | 2 | non raide seulement : A-stable mais **non L-stable**, produit des concentrations négatives sur les modes raides | ✅ |
 | Euler explicite | 1 | pédagogique ; stable si $h\lambda_{max} \le 2$ | ✅ |
@@ -115,12 +115,14 @@ dans son domaine de validation).
 | T3 | Ordres de convergence observés vs théoriques : 1,00 / 1,00 / 2,00 / 4,0 sur 15 raffinements, normes L∞ et L2, plancher d'arrondi mesuré ; **vérifié automatiquement** par `decaysolver_convergence` (ctest + job CI) | vérification | ✅ |
 | T4 | Invariants : $N(0) = N_0$ bit à bit, positivité, conservation, semi-groupe $\Phi(t_1+t_2)=\Phi(t_2)\circ\Phi(t_1)$ | vérification | ✅ |
 | T5 | Cas dégénérés D1–D3, formule naïve en `[known-limitation]`, raideur (D5) : L-stabilité, concentrations négatives de Crank–Nicolson, divergence d'Euler explicite | vérification | ✅ |
-| T6 | Non-régression, sorties figées avec tolérances | vérification | ⬜ |
-| T7 | Évaluation croisée avec un outil de référence (`radioactivedecay`) | validation | ⬜ |
+| T6 | Non-régression : 35 nucléides à 1 Bq vieillis de 10 ans, deux conventions, 139 activités figées avec provenance, tolérance 1e-12 | vérification | ✅ |
+| T7 | Évaluation croisée avec `radioactivedecay` (même source ICRP-107) : écart brut 1,9·10⁻⁴ dominé par la convention d'année (365,25 j contre 365,2422 j, cumulée sur les chaînes d'actinides) ; **2,5·10⁻⁸ contre son mode haute précision** une fois les conventions alignées ([détail](validation/cross_radioactivedecay.md)) | validation | ✅ |
 
 **Rapport de vérification** : [`verification/report/verification_report.md`](verification/report/verification_report.md)
 (matrice phénomène × cas, tableaux et figures des ordres de convergence, domaine de validité
-chiffré, limitations). Figures :
+chiffré, limitations). Troisième voie : [`expm_comparison.md`](verification/report/expm_comparison.md).
+Choix structurants : [`docs/adr/`](docs/adr/). Qualité : sanitizers ASan/UBSan, couverture par
+fichier et documentation Doxygen produits par la CI (résumé et artefacts de chaque run). Figures :
 
 ![Ordres de convergence, erreur L∞](verification/V2_order_of_accuracy/figures/convergence_Linf.png)
 
@@ -166,15 +168,18 @@ Am241;3.93e-4
 # input_kind: fraction
 # age_s: 189345600 (année julienne = 31 557 600 s)
 # daughters: input-only
-# total_activity: 0.101535
-# alpha_activity: 0.00139493
-# beta_gamma_activity: 0.10014
-# beta_gamma_over_alpha: 71.7884
+# total_activity: 0.1015347469496323
+# alpha_activity: 0.001394930226125999
+# beta_gamma_activity: 0.1001398167235063
+# beta_gamma_over_alpha: 71.78840550442062
 nuclide;activity;fraction;primary_mode
-Cs-137;9.583412e-03;9.438554e-02;beta-
-Pu-241;9.055640e-02;8.918760e-01;beta-
-Am-241;1.394930e-03;1.373845e-02;alpha
+Cs-137;9.5834123667341425e-03;9.4385544403711580e-02;beta-
+Pu-241;9.0556404356772202e-02;8.9187600380482468e-01;beta-
+Am-241;1.3949302261259987e-03;1.3738451791463787e-02;alpha
 ```
+
+Les valeurs sont écrites avec 17 chiffres significatifs : un `double` se relit exactement, et
+une comparaison entre outils n'est pas polluée par l'arrondi d'affichage.
 
 L'Am-241 a été alimenté par la décroissance β⁻ du Pu-241 ; avec `--daughters all`, les filles
 hors liste (par exemple Ba-137m sous Cs-137) apparaissent et modifient toutes les fractions.
@@ -186,8 +191,10 @@ Durées : `6a`, `30j`, `12h`, `90min`, `0s` (année julienne).
 Aucune donnée n'est codée en dur. `data/nuclides_icrp107.csv` contient 139 nucléides (les 35 de la
 liste standard de déclaration des déchets et la fermeture complète de leurs descendants), extraits
 d'**ICRP-107** par un script versionné, avec demi-vies dans leur valeur et unité d'origine.
-Source, chemin d'extraction, licence, SHA-256, voies rétablies et limitations (pas d'incertitudes,
-divergences entre bibliothèques) : [`data/PROVENANCE.md`](data/PROVENANCE.md).
+La bibliothèque complète (1512 nucléides, `data/nuclides_icrp107_full.csv`, option `--library`)
+est produite par le même script. Source, chemin d'extraction, licence, SHA-256, voies rétablies,
+voies non répertoriées et limitations (pas d'incertitudes, divergences entre bibliothèques) :
+[`data/PROVENANCE.md`](data/PROVENANCE.md).
 
 ## 10. Références
 
