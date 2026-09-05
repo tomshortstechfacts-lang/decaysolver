@@ -3,6 +3,9 @@ add_executable(decaysolver_unit_tests
     test_provenance.cpp
     test_nuclide.cpp
     test_nuclide_library.cpp
+    test_decay_system.cpp
+    test_bateman.cpp
+    test_integrator.cpp
 )
 target_link_libraries(decaysolver_unit_tests
     PRIVATE DecaySolver::decaysolver Catch2::Catch2WithMain decaysolver_warnings decaysolver_fp)

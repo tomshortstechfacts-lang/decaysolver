@@ -3,6 +3,9 @@ add_library(decaysolver
     provenance.cpp
     nuclide.cpp
     nuclide_library.cpp
+    decay_system.cpp
+    bateman.cpp
+    integrator.cpp
 )
 add_library(DecaySolver::decaysolver ALIAS decaysolver)
 
