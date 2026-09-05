@@ -1,0 +1,7 @@
+# oracle mpmath, mp.dps = 50, valeurs à 20 chiffres significatifs
+# généré par verification/scripts/ (voir le script nommé dans le cas)
+case;t_s;nuclide;N
+lambda123;4.0;A-1;0.018315638888734180294
+lambda123;4.0;A-2;0.017980176260831668455
+lambda123;4.0;A-3;0.017650857845282484826
+lambda123;4.0;A-4;0.94605332700515166643
