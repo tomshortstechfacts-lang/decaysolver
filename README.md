@@ -1,2 +1,149 @@
 # decaysolver
-la formule de Bateman
+
+Bibliothèque C++20 qui calcule l'évolution temporelle d'une chaîne de décroissance radioactive
+(équations de Bateman) par plusieurs méthodes indépendantes, et qui documente la vérification de
+ses résultats. Destinée aux ingénieurs qui vieillissent des inventaires radiologiques et veulent
+savoir ce que vaut le chiffre obtenu.
+
+[![CI](https://github.com/tomshortstechfacts-lang/decaysolver/actions/workflows/ci.yml/badge.svg)](https://github.com/tomshortstechfacts-lang/decaysolver/actions/workflows/ci.yml)
+[![Licence CeCILL-C](https://img.shields.io/badge/licence-CeCILL--C-blue.svg)](LICENSE)
+
+> **État du projet : lot 0, socle.** Le cœur numérique n'est pas encore livré. Ce README décrit
+> le périmètre visé et marque explicitement ce qui existe (✅) et ce qui est prévu (⬜).
+
+| Lot | Contenu | État |
+|---|---|---|
+| 0 | Structure, CMake strict, conversions d'unités, provenance, CI | ✅ |
+| 1 | Bibliothèque de 35 nucléides, Bateman analytique (cas dégénéré inclus), Euler implicite, RK4, mode inventaire | ⬜ |
+| 2 | Oracle multiprécision, ordres de convergence mesurés, cas dégénérés, rapport de vérification | ⬜ |
+| 3 | Exponentielle de matrice, non-régression, sanitizers, couverture, bibliothèque complète | ⬜ |
+| 4 | Évaluation croisée avec `radioactivedecay`, DOI | ⬜ |
+
+## 1. Le problème mathématique
+
+Pour une chaîne de $n$ nucléides, la population $N_i(t)$ du nucléide $i$ obéit à
+
+$$
+\frac{\mathrm{d}N_i}{\mathrm{d}t} = \sum_{j} b_{ji}\,\lambda_j\,N_j \;-\; \lambda_i\,N_i ,
+\qquad \lambda_i = \frac{\ln 2}{T_{1/2,i}} ,
+$$
+
+où $b_{ji}$ est le rapport d'embranchement de $j$ vers $i$ ($\sum_i b_{ji} = 1$).
+Sous forme matricielle, $\dot{\mathbf N} = A\,\mathbf N$, $\mathbf N(0) = \mathbf N_0$, dont la
+solution exacte est $\mathbf N(t) = e^{At}\,\mathbf N_0$. L'activité est $A_i = \lambda_i N_i$.
+
+Propriétés de $A$ exploitées et testées : $A_{ii} = -\lambda_i \le 0$ et $A_{ij} \ge 0$ pour
+$i \ne j$ (matrice de Metzler), donc $e^{At}$ est positive ; si aucune voie ne quitte le système,
+les colonnes de $A$ somment à zéro et le nombre total d'atomes est conservé.
+
+## 2. Schémas prévus
+
+| Méthode | Ordre | Quand l'utiliser | État |
+|---|---|---|---|
+| Formule analytique de Bateman | exacte | référence ; instable si deux $\lambda$ sont proches (annulation) | ⬜ lot 1 |
+| Exponentielle de matrice (Padé, scaling-and-squaring) | exacte | référence indépendante, graphes généraux | ⬜ lot 3 |
+| Euler implicite | 1 | problèmes raides, positivité garantie | ⬜ lot 1 |
+| RK4 explicite | 4 | problèmes non raides, mesure d'ordre | ⬜ lot 1 |
+
+## 3. Hypothèses
+
+- Décroissance spontanée seule : coefficients constants, système linéaire.
+- Rapports d'embranchement et demi-vies tirés d'une bibliothèque évaluée, avec leur provenance.
+- Convention d'année : **année julienne, 365,25 j = 31 557 600 s**.
+- Arithmétique IEEE-754 `double` stricte : le projet **refuse `-ffast-math`** et désactive la
+  contraction FMA. Ces options changent l'ordre et l'arrondi des opérations, et rendent caduc tout
+  raisonnement sur l'erreur d'arrondi (voir `cmake/FloatingPoint.cmake`).
+
+## 4. Limitations
+
+- Pas de flux neutronique, pas de capture, pas de fission : ce n'est pas un code d'évolution
+  sous irradiation.
+- Pas de transport, pas de dosimétrie, pas de spectres d'émission.
+- Pas de conversion activité → masse, pas de classement réglementaire des déchets.
+- La méthode CRAM, référence des codes industriels pour les systèmes très raides, n'est **pas**
+  implémentée.
+- Pas de parallélisme.
+
+## 5. Domaine de validité
+
+À chiffrer avec le rapport de vérification (lot 2) : plage de rapports $\lambda_i/\lambda_j$ où
+la formule analytique reste exacte en `double`, plage de raideur couverte par chaque schéma,
+précision attendue par méthode.
+
+## 6. Vérification
+
+Le vocabulaire suit le guide ASN n°28 (*Qualification des outils de calcul scientifique utilisés
+dans la démonstration de sûreté nucléaire*, 2017), pris comme **référentiel méthodologique
+d'inspiration** : ce guide porte formellement sur les outils de la démonstration de sûreté, et un
+solveur de décroissance n'entre pas dans son champ d'application. On en retient la distinction
+**vérification** (l'outil fait ce que l'on a voulu qu'il fasse : réalisation informatique et
+numérique correcte) / **validation** (l'outil représente correctement les phénomènes physiques
+dans son domaine de validation).
+
+| Niveau | Contenu | Terme ASN | État |
+|---|---|---|---|
+| T1 | Unitaires : conversions, parsing, construction du graphe, $\sum b = 1$ | vérification | ✅ conversions |
+| T2 | Solutions analytiques vs oracle multiprécision, équilibres | vérification (cas de validation analytiques) | ⬜ |
+| T3 | Ordres de convergence observés vs théoriques | vérification | ⬜ |
+| T4 | Invariants : positivité, conservation, semi-groupe, $N(0) = N_0$ | vérification | ⬜ |
+| T5 | Cas dégénérés : $\lambda_i = \lambda_j$, $\lambda = 0$, raideur extrême | vérification | ⬜ |
+| T6 | Non-régression, sorties figées avec tolérances | vérification | ⬜ |
+| T7 | Évaluation croisée avec un outil de référence (`radioactivedecay`) | validation | ⬜ |
+
+## 7. Installation
+
+Prérequis : CMake ≥ 3.21, Ninja, un compilateur C++20 (GCC ≥ 13, Clang ≥ 17, MSVC 2022).
+Catch2 est récupéré automatiquement (tag figé) s'il n'est pas installé.
+
+```bash
+cmake --preset dev
+cmake --build --preset dev
+ctest --preset dev
+```
+
+Sous Windows avec MSVC, lancer ces commandes depuis un *x64 Native Tools Command Prompt* (ou
+après `vcvars64.bat`).
+
+## 8. Exemple
+
+Lot 0 : l'exécutable n'expose que sa provenance.
+
+```bash
+./build/dev/apps/decaysolver --provenance
+```
+
+```
+# decaysolver: 0.1.0
+# git_sha: 0123456789ab (capturé à la configuration CMake)
+# compiler: GNU 14.2.0
+# build_type: Debug
+# generated_utc: 2026-09-05T13:04:00Z
+```
+
+## 9. Données nucléaires
+
+Lot 1. Aucune donnée n'est codée en dur : demi-vies, modes et rapports d'embranchement vivent dans
+`data/`, avec un fichier `PROVENANCE.md` (source, version, date d'extraction, licence, SHA-256).
+
+## 10. Références
+
+- H. Bateman, *Solution of a system of differential equations occurring in the theory of
+  radio-active transformations*, Proc. Cambridge Phil. Soc. 15 (1910) 423–427.
+- C. Moler, C. Van Loan, *Nineteen Dubious Ways to Compute the Exponential of a Matrix,
+  Twenty-Five Years Later*, SIAM Review 45(1) (2003) 3–49. doi:10.1137/S00361445024180
+- E. Hairer, G. Wanner, *Solving Ordinary Differential Equations II: Stiff and
+  Differential-Algebraic Problems*, Springer, 2e éd., 1996. doi:10.1007/978-3-642-05221-7
+- ASN, *Guide n°28 : Qualification des outils de calcul scientifique utilisés dans la
+  démonstration de sûreté nucléaire — première barrière*, 2017.
+
+## 11. Citer, licence, contribuer
+
+Citation : voir [`CITATION.cff`](CITATION.cff).
+
+Licence : **CeCILL-C** (voir [`LICENSE`](LICENSE), version française dans
+[`LICENSE.fr`](LICENSE.fr)). Choix motivé par la cohérence avec l'écosystème français du logiciel
+scientifique (CEA, CNRS, Inria) et par son régime de type LGPL : réutilisable dans un logiciel
+propriétaire, modifications de la bibliothèque à publier.
+
+Contributions : toute modification qui change un résultat numérique doit venir avec la mise à
+jour des tests de non-régression et une entrée `Numerics` dans le [CHANGELOG](CHANGELOG.md).
