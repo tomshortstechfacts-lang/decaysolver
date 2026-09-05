@@ -1,0 +1,3 @@
+add_executable(decaysolver_cli decaysolver_cli.cpp)
+set_target_properties(decaysolver_cli PROPERTIES OUTPUT_NAME decaysolver)
+target_link_libraries(decaysolver_cli PRIVATE DecaySolver::decaysolver decaysolver_warnings decaysolver_fp)
