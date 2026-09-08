@@ -1,7 +1,8 @@
-# Rapport de vérification — decaysolver 0.1.0
+# Rapport de vérification — decaysolver 0.2.0
 
 *Version du code : voir l'en-tête de provenance des sorties (SHA git). Données : ICRP-107 via
-`data/nuclides_icrp107.csv`, SHA-256 dans `data/PROVENANCE.md`. Généré le 2026-09-05.*
+`data/nuclides_icrp107.csv`, SHA-256 dans `data/PROVENANCE.md`. Généré le 2026-09-05, complété le
+2026-09-08 (§3 bis, CRAM).*
 
 ## 0. Objet et vocabulaire
 
@@ -34,6 +35,12 @@ deux arithmétiques.
 | Conservation, données exactes | Sr-90 (rapports = 1) | T4 | `test_bateman.cpp` | ≤ 1e-14 |
 | Conservation, données ICRP-107 | Ra-226 sur 1100 a | T4 | `test_bateman.cpp` | ≤ 1e-5 (arrondis des rapports, voir §4) |
 | Semi-groupe | Φ(1100 a) = Φ(1000 a)∘Φ(100 a), Ra-226 | T4 | `test_bateman.cpp` | ≤ 1e-10 |
+| **CRAM : coefficients** | r_k(x) vs e^x, x ∈ ]−10¹², 0], k = 16 et 48 | T2 | `test_cram.cpp`, `cram_python.py` | 1,6e-15 / 3,2e-15 absolu |
+| **CRAM vs oracle** | (1,2,3,0) ; Ra-226, 3 échéances | T2/V1 | `test_cram.cpp` | k = 48 : **1,2e-15** relatif ; k = 16 : 8e-16 absolu, 5e-11 relatif |
+| CRAM vs solution analytique | 139 nucléides (fermeture de la liste standard), 10 a | T2 | `test_cram.cpp` | ≤ 1,8e-15 absolu |
+| CRAM : invariants | N(0), conservation Sr-90, semi-groupe Ra-226 | T4 | `test_cram.cpp` | ≤ 1e-14 absolu |
+| CRAM : raideur extrême | λ de 10⁴ à 10⁻¹⁵ s⁻¹, λ_max t = 10²⁰ | T5 | `test_cram.cpp` | ≤ 1e-14 absolu, 1e-12 relatif sur A-5 |
+| **Limitation : CRAM en relatif** | e^{−30} par CRAM-16 | T2, limitation déclarée | `test_cram.cpp` | erreur relative ≈ 10⁻³, bornée et déclarée |
 | Ordres de convergence | 4 schémas, (1,2,3,0), 15 raffinements | T3/V2 | `decaysolver_convergence` | §2 |
 | Raideur : L-stabilité | Rn-222, h = 1 a, Euler implicite | T5/D5 | `test_integrator.cpp` | positif, conservatif |
 | Raideur : non-L-stabilité | Crank–Nicolson, même cas | T5/D5 | `test_integrator.cpp` | N = R(z) N₀ < 0 |
@@ -102,6 +109,37 @@ absolu à 10⁻⁴⁰.
 formule analytique. Ce sont les constantes *proches*, pas les constantes *étalées*, qui la
 détruisent (§1, D2–D3). Deux pathologies indépendantes.
 
+## 3 bis. CRAM contre oracle, contre la voie analytique, contre expm (lot 5)
+
+CRAM approche e^x sur ]−∞, 0] par une fraction rationnelle de degré k, évaluée en forme produit
+(Pusa 2016) : k/2 résolutions linéaires complexes (At − θ_i I) x = y, ici par substitution avant.
+Rien n'est mis à l'échelle, rien n'est élevé au carré : l'erreur ne dépend pas de ‖At‖.
+
+**Coefficients.** Relus depuis une transcription publique de Pusa 2016 et contrôlés deux fois :
+en C++ contre `std::exp` (81 points de −10⁻⁸ à −10¹²), en Python contre mpmath à 30 chiffres
+(4001 points). Erreur absolue maximale 1,6·10⁻¹⁵ (k = 16) et 3,2·10⁻¹⁵ (k = 48), atteinte près de
+x = 0. Une faute sur un chiffre d'un coefficient se verrait à 10⁻⁵ au moins : le test est
+discriminant.
+
+**Chaîne du Ra-226, trois échéances, contre l'oracle** (mêmes fichiers que V1) :
+
+| méthode | 30 j | 1 a | 100 a | nature de l'erreur |
+|---|---|---|---|---|
+| Bateman (différences divisées) | 4,0e-13 | ≤ 4e-13 | ≤ 4e-13 | relative, positivité garantie |
+| expm SciPy (Padé + scaling-and-squaring) | 1,9e-07 | 1,6e-06 | **1,4e-04** | croît avec ‖At‖ |
+| CRAM-16 | 5,5e-11 rel. / 9e-16 abs. | 2,5e-12 rel. | 1,4e-14 rel. | absolue, plancher α₀ = 2e-16 |
+| CRAM-48 | **1,2e-15** rel. | 6,7e-16 | 6,7e-16 | à l'arrondi près |
+
+Tableau détaillé, par cas et par méthode, avec ‖At‖₁ : [`cram_comparison.md`](cram_comparison.md).
+
+**Les deux limitations, mesurées plutôt qu'affirmées.** (1) L'erreur de CRAM est *absolue* : à
+x = −30, e^x ≈ 10⁻¹³ et l'ordre 16 est à 10⁻³ en relatif ; l'ordre 48 tient 10⁻¹⁴ jusqu'à
+x ≈ −60. Une population de 10⁻²⁰ pour une population initiale de 1 n'est donc pas résolue par
+l'ordre 16, et l'est encore par l'ordre 48. (2) La positivité n'est pas garantie : le test
+vérifie N ≥ −10⁻¹⁴, pas N ≥ 0. Pour ces deux raisons, le mode inventaire garde la voie analytique
+par défaut ; CRAM est la voie de l'algèbre linéaire, celle qui s'étend aux graphes larges et, avec
+une factorisation LU, aux graphes cycliques.
+
 ## 4. Domaine de validité chiffré
 
 | Quantité | Domaine | Précision attendue | Preuve |
@@ -110,6 +148,8 @@ détruisent (§1, D2–D3). Deux pathologies indépendantes.
 | Solution analytique, constantes proches ou égales | écarts relatifs de 0 à 10⁻⁷ testés (D1–D3) | ≤ 10⁻¹² relatif | T5 |
 | Conservation du nombre d'atomes | données à rapports exacts | ≤ 10⁻¹⁴ | T4 Sr-90 |
 | Conservation, données ICRP-107 | toute chaîne | bornée par max |Σb − 1| = 6·10⁻⁵ et par les voies SF non suivies (≤ 1,4·10⁻⁶) | T4 Ra-226, T1 |
+| CRAM-48 | toute raideur (testé jusqu'à λ_max t = 10²⁰), graphe acyclique | ≤ 3·10⁻¹⁵ absolu ; ≤ 10⁻¹⁴ relatif tant que N ≥ 10⁻²⁶ ‖N₀‖ ; N < 0 possible à ce niveau | T2, T4, T5 (`[cram]`) |
+| CRAM-16 | idem | ≤ 2·10⁻¹⁵ absolu ; relatif ≤ 10⁻¹⁰ seulement pour N ≥ 10⁻⁵ ‖N₀‖ | idem |
 | Euler implicite | tout h > 0, y compris h·λ ≫ 1 | ordre 1 ; positivité et conservation garanties | V2, T5 |
 | Crank–Nicolson | h·λ_max ≲ 2 recommandé | ordre 2 ; **N < 0 possible** si h·λ ≫ 1 | V2, T5 |
 | RK4 | h·λ_max ≤ 2,785 | ordre 4 jusqu'à E ≈ 10⁻¹³ | V2 |
@@ -132,6 +172,8 @@ bibliothèque de demi-vies, et decaysolver la recopie dans chaque sortie pour qu
   source (§4), délibérément non renormalisée.
 - Ordres de convergence mesurés sur un problème non raide uniquement ; en régime raide, seul
   l'Euler implicite est utilisable, et son ordre effectif n'est pas mesuré ici.
+- CRAM : précision absolue et non relative, positivité non garantie, N(0) à l'arrondi près ;
+  substitution avant seulement (pas de cycles), pas de terme source.
 - Aucune propagation d'incertitude sur λ (données sans incertitudes).
 - Pas de PDF : ce rapport est le fichier Markdown du dépôt, figures incluses.
 
@@ -143,5 +185,6 @@ python verification/scripts/oracle_ra226.py            # oracle_ra226.csv
 cmake --preset release && cmake --build --preset release
 ./build/release/verification/decaysolver_convergence verification/V2_order_of_accuracy/oracle_lambda123.csv out.csv
 python verification/scripts/plot_convergence.py out.csv  # figures + convergence_tables.md
-ctest --preset release                                 # T1–T5, V1, V2
+python verification/scripts/cram_python.py             # cram_comparison.md + figure
+ctest --preset release                                 # T1–T5, V1, V2, [cram]
 ```

@@ -9,7 +9,7 @@ savoir ce que vaut le chiffre obtenu.
 [![Licence CeCILL-C](https://img.shields.io/badge/licence-CeCILL--C-blue.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/1358188913.svg)](https://doi.org/10.5281/zenodo.22356941)
 
-> **État du projet : version 0.1.1, lots 1 à 4 du cahier des charges livrés.** Cœur numérique
+> **État du projet : version 0.2.0, lots 1 à 5 livrés (lot 5 : CRAM, 2026-09-08).** Cœur numérique
 > vérifié contre un oracle multiprécision, ordres de convergence contrôlés en CI, mode inventaire
 > validé par évaluation croisée, archivé sur Zenodo avec DOI. Le tableau ci-dessous marque ce qui
 > existe (✅).
@@ -45,6 +45,7 @@ les colonnes de $A$ somment à zéro et le nombre total d'atomes est conservé.
 |---|---|---|---|
 | Formule analytique de Bateman, par différences divisées de l'exponentielle | exacte | référence ; les $\lambda$ proches ou égaux sont traités par série de Taylor (McCurdy, Ng & Parlett) au lieu de la somme fermée, qui perd ses chiffres par annulation | ✅ |
 | Exponentielle de matrice (SciPy, Padé + scaling-and-squaring) | exacte en théorie | troisième voie de contrôle, côté Python. **En `double`, perd quatre chiffres sur la chaîne du Ra-226 à 100 ans** (‖At‖ ≈ 10¹³ impose ~40 élévations au carré) : bonne pour vérifier, mauvaise pour produire sur un problème raide, ce qui est la raison d'être de CRAM dans les codes industriels | ✅ |
+| **CRAM** (approximation rationnelle de Tchebychev de $e^{At}$, ordres 16 et 48, forme produit de Pusa 2016) | erreur absolue ≤ 3·10⁻¹⁵ quelle que soit la raideur | la méthode des codes d'évolution (Serpent, OpenMC) : k/2 résolutions linéaires complexes, ici par substitution avant, **sans mise à l'échelle**. Sur la chaîne du Ra-226 à 100 ans : 1,2·10⁻¹⁵ de l'oracle (ordre 48) là où expm est à 1,4·10⁻⁴. Précision **absolue** et non relative, positivité **non garantie** : voir §5 et [ADR 0004](docs/adr/0004-cram-forme-produit-substitution-avant.md) | ✅ (0.2.0) |
 | Euler implicite | 1 | problèmes raides ; L-stable, positivité garantie (A de Metzler) | ✅ |
 | Crank–Nicolson | 2 | non raide seulement : A-stable mais **non L-stable**, produit des concentrations négatives sur les modes raides | ✅ |
 | Euler explicite | 1 | pédagogique ; stable si $h\lambda_{max} \le 2$ | ✅ |
@@ -77,8 +78,9 @@ triangulaire inférieure.
   sous irradiation.
 - Pas de transport, pas de dosimétrie, pas de spectres d'émission.
 - Pas de conversion activité → masse, pas de classement réglementaire des déchets.
-- La méthode CRAM, référence des codes industriels pour les systèmes très raides, n'est **pas**
-  implémentée.
+- CRAM n'est fournie que sur graphe acyclique (substitution avant) : un système avec cycles
+  (activation sous flux, réactions (n,2n)) demanderait une factorisation LU générale, absente.
+- Pas de terme source : coefficients constants, pas de production externe.
 - Pas de parallélisme.
 
 ## 5. Domaine de validité
@@ -94,6 +96,14 @@ Chiffres établis par le [rapport de vérification](verification/report/verifica
 - **Conservation du nombre d'atomes** : exacte à $10^{-14}$ sur des données à rapports
   d'embranchement exacts ; sur ICRP-107, limitée par les arrondis des rapports (Bi-210 :
   $1 + 1{,}3\cdot10^{-6}$), et par les voies de fission spontanée non suivies ($\le 1{,}4\cdot10^{-6}$).
+- **CRAM.** Coefficients vérifiés contre $e^x$ sur $]-10^{12}, 0]$ : erreur absolue max
+  $1{,}6\cdot10^{-15}$ (ordre 16) et $3{,}2\cdot10^{-15}$ (ordre 48). Chaîne du Ra-226 contre
+  l'oracle : ordre 48, $1{,}2\cdot10^{-15}$ relatif sur les populations $\ge 10^{-30}$ ; ordre 16,
+  $8\cdot10^{-16}$ absolu mais $5\cdot10^{-11}$ relatif (plancher absolu $\alpha_0 \approx 2\cdot10^{-16}$).
+  Accord avec la solution analytique sur 139 nucléides à 10 ans : $\le 1{,}8\cdot10^{-15}$ absolu.
+  Raideur extrême ($\lambda_{max} t = 10^{20}$) sans perte. **Limites déclarées** : erreur absolue,
+  pas relative (une population de $10^{-20}$ n'est pas résolue) ; positivité non garantie ;
+  $N(0)$ à l'arrondi près. Détail : [`cram_comparison.md`](verification/report/cram_comparison.md).
 - **Intégrateurs** : ordres observés 1,00 / 1,00 / 2,00 / 4,0 à $\pm 0{,}1$ sur le problème non
   raide $\lambda = (1,2,3,0)$, $T = 4$, avec plancher d'arrondi atteint par RK4 vers $10^{-13}$
   (l'ordre observé s'effondre ensuite, comme attendu). En régime raide, seul Euler implicite est
@@ -114,7 +124,7 @@ dans son domaine de validation).
 | Niveau | Contenu | Terme ASN | État |
 |---|---|---|---|
 | T1 | Unitaires : conversions, parsing, noms de nucléides, validation de la bibliothèque ($\sum b = 1$, filles présentes, absence de cycle) | vérification | ✅ |
-| T2 | Solutions analytiques : formules fermées, Sr-90/Y-90, équilibre séculaire ; **oracle mpmath** sur le jeu D, sur (1,2,3,0) et sur la chaîne réelle Ra-226 → Pb-206 (15 nucléides, 3 échéances : écart max 4·10⁻¹³) | vérification (cas de validation analytiques) | ✅ |
+| T2 | Solutions analytiques : formules fermées, Sr-90/Y-90, équilibre séculaire ; **oracle mpmath** sur le jeu D, sur (1,2,3,0) et sur la chaîne réelle Ra-226 → Pb-206 (15 nucléides, 3 échéances : écart max 4·10⁻¹³) ; **CRAM** contre le même oracle (1,2·10⁻¹⁵) et contre la voie analytique sur 139 nucléides | vérification (cas de validation analytiques) | ✅ |
 | T3 | Ordres de convergence observés vs théoriques : 1,00 / 1,00 / 2,00 / 4,0 sur 15 raffinements, normes L∞ et L2, plancher d'arrondi mesuré ; **vérifié automatiquement** par `decaysolver_convergence` (ctest + job CI) | vérification | ✅ |
 | T4 | Invariants : $N(0) = N_0$ bit à bit, positivité, conservation, semi-groupe $\Phi(t_1+t_2)=\Phi(t_2)\circ\Phi(t_1)$ | vérification | ✅ |
 | T5 | Cas dégénérés D1–D3, formule naïve en `[known-limitation]`, raideur (D5) : L-stabilité, concentrations négatives de Crank–Nicolson, divergence d'Euler explicite | vérification | ✅ |
@@ -123,7 +133,8 @@ dans son domaine de validation).
 
 **Rapport de vérification** : [`verification/report/verification_report.md`](verification/report/verification_report.md)
 (matrice phénomène × cas, tableaux et figures des ordres de convergence, domaine de validité
-chiffré, limitations). Troisième voie : [`expm_comparison.md`](verification/report/expm_comparison.md).
+chiffré, limitations). Troisième voie : [`expm_comparison.md`](verification/report/expm_comparison.md) ;
+CRAM contre expm et contre l'oracle : [`cram_comparison.md`](verification/report/cram_comparison.md).
 Choix structurants : [`docs/adr/`](docs/adr/). Qualité : sanitizers ASan/UBSan, couverture par
 fichier et documentation Doxygen produits par la CI (résumé et artefacts de chaque run).
 
@@ -207,7 +218,9 @@ une comparaison entre outils n'est pas polluée par l'arrondi d'affichage.
 
 L'Am-241 a été alimenté par la décroissance β⁻ du Pu-241 ; avec `--daughters all`, les filles
 hors liste (par exemple Ba-137m sous Cs-137) apparaissent et modifient toutes les fractions.
-Options : `--kind bq|fraction`, `--daughters input-only|all`, `--library`, `--output`.
+Options : `--kind bq|fraction`, `--daughters input-only|all`, `--method bateman|cram16|cram48`
+(solution analytique par défaut ; CRAM donne le même résultat à 10⁻¹⁴ près et l'en-tête
+`# method:` dit laquelle a servi), `--library`, `--output`.
 Durées : `6a`, `30j`, `12h`, `90min`, `0s` (année julienne).
 
 ## 9. Données nucléaires
@@ -226,6 +239,9 @@ voies non répertoriées et limitations (pas d'incertitudes, divergences entre b
   radio-active transformations*, Proc. Cambridge Phil. Soc. 15 (1910) 423–427.
 - C. Moler, C. Van Loan, *Nineteen Dubious Ways to Compute the Exponential of a Matrix,
   Twenty-Five Years Later*, SIAM Review 45(1) (2003) 3–49. doi:10.1137/S00361445024180
+- M. Pusa, *Higher-Order Chebyshev Rational Approximation Method and Application to Burnup
+  Equations*, Nucl. Sci. Eng. 182 (2016) 297–318. doi:10.13182/NSE15-26 ; M. Pusa, J. Leppänen,
+  Nucl. Sci. Eng. 164 (2010) 140–150.
 - E. Hairer, G. Wanner, *Solving Ordinary Differential Equations II: Stiff and
   Differential-Algebraic Problems*, Springer, 2e éd., 1996. doi:10.1007/978-3-642-05221-7
 - ASN, *Guide n°28 : Qualification des outils de calcul scientifique utilisés dans la

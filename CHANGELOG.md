@@ -7,9 +7,39 @@ MINOR**, et une entrée sous la rubrique `Numerics` décrivant le changement et 
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-08
+
+Lot 5 : la méthode CRAM, déclarée comme limitation en 0.1, est implémentée et vérifiée.
+
+### Added
+- **CRAM** (`decaysolver/cram.hpp`, ADR 0004) : approximation rationnelle de Tchebychev de
+  l'exponentielle de matrice, ordres 16 et 48 (coefficients Pusa 2016, forme produit IPF),
+  résolutions complexes par substitution avant dans l'ordre topologique. Coût indépendant de la
+  raideur, sans mise à l'échelle : là où Padé + scaling-and-squaring perd quatre chiffres sur la
+  chaîne du Ra-226 à 100 ans, CRAM-48 reste à 1,2·10⁻¹⁵ de l'oracle multiprécision.
+- Tests `[cram]` : coefficients contrôlés contre e^x sur ]−10¹², 0] (1,6·10⁻¹⁵ et 3,2·10⁻¹⁵
+  absolu), chaîne (1,2,3,0) et chaîne du Ra-226 contre l'oracle (V1), accord avec la solution
+  analytique sur les 139 nucléides de la fermeture de la liste standard (≤ 1,8·10⁻¹⁵ absolu),
+  invariants (conservation, semi-groupe, N(0)), raideur extrême (λ_max t = 10²⁰), et les deux
+  limitations déclarées : précision absolue et non relative (ordre 16 : 10⁻³ relatif à x = −30),
+  positivité non garantie (borne vérifiée, pas le signe).
+- Contrôle Python indépendant `verification/scripts/cram_python.py` (coefficients relus dans le
+  fichier C++, référence mpmath, résolution LU dense) et rapport
+  `verification/report/cram_comparison.md` avec figure de l'erreur scalaire et comparaison
+  expm / CRAM-16 / CRAM-48 sur le Ra-226.
+- Mode inventaire et CLI : option `--method bateman|cram16|cram48` (défaut : `bateman`),
+  méthode tracée dans l'en-tête de provenance (`# method:`).
+
 ### Changed
+- README : CRAM passe des limitations aux schémas disponibles ; domaine de validité et
+  rapport de vérification complétés (§3 bis).
 - README et CITATION.cff : badge et DOI Zenodo (concept 10.5281/zenodo.22356941, version 0.1.1
   10.5281/zenodo.22356942).
+
+### Numerics
+- Aucun changement des résultats existants : la voie analytique reste la méthode par défaut,
+  la référence de non-régression T6 est inchangée. CRAM est une voie supplémentaire, choisie
+  explicitement.
 
 ## [0.1.1] — 2026-09-05
 
