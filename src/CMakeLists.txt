@@ -5,6 +5,8 @@ add_library(decaysolver
     nuclide_library.cpp
     decay_system.cpp
     bateman.cpp
+    cram.cpp
+    cram_coefficients.cpp
     integrator.cpp
     inventory.cpp
 )

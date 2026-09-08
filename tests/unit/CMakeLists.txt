@@ -5,6 +5,7 @@ add_executable(decaysolver_unit_tests
     test_nuclide_library.cpp
     test_decay_system.cpp
     test_bateman.cpp
+    test_cram.cpp
     test_integrator.cpp
     test_inventory.cpp
     test_oracle_cases.cpp
