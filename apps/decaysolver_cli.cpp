@@ -3,7 +3,8 @@
 //
 //   decaysolver --version | --provenance
 //   decaysolver age --input INV.csv --age 6a [--kind bq|fraction] [--daughters input-only|all]
-//                   [--library data/nuclides_icrp107.csv] [--output OUT.csv]
+//                   [--method bateman|cram16|cram48] [--library data/nuclides_icrp107.csv]
+//                   [--output OUT.csv]
 
 #include <decaysolver/inventory.hpp>
 #include <decaysolver/nuclide_library.hpp>
@@ -40,6 +41,7 @@ struct AgeArguments {
     std::string age;
     std::string kind = "bq";
     std::string daughters = "input-only";
+    std::string method = "bateman";
     std::string library = DECAYSOLVER_DEFAULT_LIBRARY;
     std::string output;
 };
@@ -61,6 +63,8 @@ AgeArguments parse_age_arguments(std::span<char*> args) {
             parsed.kind = value;
         } else if (option == "--daughters") {
             parsed.daughters = value;
+        } else if (option == "--method") {
+            parsed.method = value;
         } else if (option == "--library") {
             parsed.library = value;
         } else if (option == "--output") {
@@ -80,6 +84,8 @@ int run_age(std::span<char*> args) {
     const decaysolver::ValueKind kind = decaysolver::value_kind_from_string(arguments.kind);
     const decaysolver::DaughterPolicy policy =
         decaysolver::daughter_policy_from_string(arguments.daughters);
+    const decaysolver::SolverMethod method =
+        decaysolver::solver_method_from_string(arguments.method);
     const double age_s = decaysolver::parse_duration_s(arguments.age);
 
     const decaysolver::NuclideLibrary library =
@@ -90,7 +96,7 @@ int run_age(std::span<char*> args) {
     }
     const decaysolver::Inventory inventory = decaysolver::read_inventory(input_file, kind);
     const decaysolver::AgedInventory aged =
-        decaysolver::age_inventory(library, inventory, age_s, policy);
+        decaysolver::age_inventory(library, inventory, age_s, policy, method);
 
     const std::string description = arguments.input + " vieilli de " + arguments.age;
     if (arguments.output.empty()) {

@@ -167,5 +167,6 @@ TEST_CASE("inventory: sortie CSV avec provenance", "[inventory][T1][data]") {
     REQUIRE(text.find("# decaysolver: ") != std::string::npos);
     REQUIRE(text.find("# data: source: ICRP") != std::string::npos);
     REQUIRE(text.find("# daughters: input-only") != std::string::npos);
+    REQUIRE(text.find("# method: bateman") != std::string::npos);
     REQUIRE(text.find("nuclide;activity;fraction;primary_mode\nCs-137;") != std::string::npos);
 }

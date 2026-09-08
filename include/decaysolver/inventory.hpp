@@ -37,6 +37,15 @@ enum class ValueKind { activity_bq, fraction };
 [[nodiscard]] ValueKind value_kind_from_string(std::string_view text);
 [[nodiscard]] std::string_view to_string(ValueKind kind);
 
+/// Méthode de résolution de dN/dt = A·N. `bateman` : solution analytique par différences divisées
+/// (référence, positivité garantie) ; `cram16` / `cram48` : approximation rationnelle de
+/// Tchebychev de l'exponentielle de matrice (`decaysolver/cram.hpp`), précision absolue ≈ 10⁻¹⁵
+/// quelle que soit la raideur, positivité non garantie. Les deux voies s'accordent à 10⁻¹⁴ absolu
+/// sur la liste des 35 nucléides (test `[cram][T2][data]`).
+enum class SolverMethod { bateman, cram16, cram48 };
+[[nodiscard]] SolverMethod solver_method_from_string(std::string_view text);
+[[nodiscard]] std::string_view to_string(SolverMethod method);
+
 struct InventoryEntry {
     std::string nuclide; ///< forme canonique
     double value;        ///< Bq ou proportion, selon `ValueKind`
@@ -67,6 +76,7 @@ struct AgedEntry {
 struct AgedInventory {
     double age_s;
     DaughterPolicy policy;
+    SolverMethod method;
     ValueKind kind;
     std::vector<AgedEntry> entries;
     double total;      ///< somme des activités listées
@@ -77,7 +87,8 @@ struct AgedInventory {
 /// Vieillit `inventory` de `age_s` secondes. Un nucléide stable ou absent de la bibliothèque en
 /// entrée est une erreur (DataError / std::out_of_range).
 [[nodiscard]] AgedInventory age_inventory(const NuclideLibrary& library, const Inventory& inventory,
-                                          double age_s, DaughterPolicy policy);
+                                          double age_s, DaughterPolicy policy,
+                                          SolverMethod method = SolverMethod::bateman);
 
 /// Écrit le résultat en CSV avec l'en-tête de provenance (code, données, cas de calcul).
 void write_aged_inventory(std::ostream& out, const AgedInventory& aged,

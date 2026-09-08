@@ -1,4 +1,5 @@
 #include <decaysolver/bateman.hpp>
+#include <decaysolver/cram.hpp>
 #include <decaysolver/decay_system.hpp>
 #include <decaysolver/inventory.hpp>
 #include <decaysolver/provenance.hpp>
@@ -172,8 +173,51 @@ double parse_duration_s(std::string_view text) {
                                 "' (attendu : s, min, h, j, a)");
 }
 
+SolverMethod solver_method_from_string(std::string_view text) {
+    if (text == "bateman") {
+        return SolverMethod::bateman;
+    }
+    if (text == "cram16") {
+        return SolverMethod::cram16;
+    }
+    if (text == "cram48") {
+        return SolverMethod::cram48;
+    }
+    throw std::invalid_argument("méthode inconnue : '" + std::string(text) +
+                                "' (attendu : bateman, cram16, cram48)");
+}
+
+std::string_view to_string(SolverMethod method) {
+    switch (method) {
+    case SolverMethod::bateman:
+        return "bateman";
+    case SolverMethod::cram16:
+        return "cram16";
+    case SolverMethod::cram48:
+        return "cram48";
+    }
+    throw std::invalid_argument("méthode hors énumération");
+}
+
+namespace {
+
+std::vector<double> solve(const DecaySystem& system, const std::vector<double>& n0, double t_s,
+                          SolverMethod method) {
+    switch (method) {
+    case SolverMethod::bateman:
+        return solve_bateman(system, n0, t_s);
+    case SolverMethod::cram16:
+        return solve_cram(system, n0, t_s, CramOrder::order_16);
+    case SolverMethod::cram48:
+        return solve_cram(system, n0, t_s, CramOrder::order_48);
+    }
+    throw std::invalid_argument("méthode hors énumération");
+}
+
+} // namespace
+
 AgedInventory age_inventory(const NuclideLibrary& library, const Inventory& inventory, double age_s,
-                            DaughterPolicy policy) {
+                            DaughterPolicy policy, SolverMethod method) {
     if (std::isnan(age_s) || age_s < 0.0) {
         throw std::invalid_argument("âge négatif ou NaN");
     }
@@ -195,7 +239,7 @@ AgedInventory age_inventory(const NuclideLibrary& library, const Inventory& inve
         const std::size_t i = system.index_of(entry.nuclide);
         n0[i] = entry.value / lambdas[i];
     }
-    const std::vector<double> n = solve_bateman(system, n0, age_s);
+    const std::vector<double> n = solve(system, n0, age_s, method);
 
     // Sélection et ordre de sortie : ordre d'entrée pour input-only, ordre topologique pour all.
     std::vector<std::size_t> selected;
@@ -211,7 +255,7 @@ AgedInventory age_inventory(const NuclideLibrary& library, const Inventory& inve
         }
     }
 
-    AgedInventory aged{age_s, policy, inventory.kind, {}, 0.0, 0.0, 0.0};
+    AgedInventory aged{age_s, policy, method, inventory.kind, {}, 0.0, 0.0, 0.0};
     for (const std::size_t i : selected) {
         const double activity = lambdas[i] * n[i];
         const DecayMode mode = system.nuclide(i).primary_mode();
@@ -240,6 +284,7 @@ void write_aged_inventory(std::ostream& out, const AgedInventory& aged,
     out << "# age_s: " << std::setprecision(17) << aged.age_s
         << " (année julienne = 31 557 600 s)\n";
     out << "# daughters: " << to_string(aged.policy) << '\n';
+    out << "# method: " << to_string(aged.method) << '\n';
     out << "# total_activity: " << std::setprecision(16) << aged.total << '\n';
     out << "# alpha_activity: " << aged.alpha << '\n';
     out << "# beta_gamma_activity: " << aged.beta_gamma << '\n';
