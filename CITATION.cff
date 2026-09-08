@@ -5,7 +5,7 @@ title: "decaysolver : résolution vérifiée des équations de Bateman"
 authors:
   - family-names: Bulabois
     given-names: Tom
-version: 0.1.1
+version: 0.2.0
 date-released: 2026-09-05
 doi: 10.5281/zenodo.22356942
 identifiers:
